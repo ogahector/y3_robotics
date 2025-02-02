@@ -1,17 +1,29 @@
 clc; clear all; close all;
-
-plot_robot(0,pi/4,-pi/8,-pi/8)%%What it should look like
-
-%Variables - Open
-%Should give t1 = 0, t2 = pi/4, t3 = -pi/8, t4 = -pi/8
+%pi/2 = 1.5708
 %pi/4 = 0.7854
 %pi/8 = 0.3927
-%Orientation should be 0 for this
-x = 33.2485;
-y = 0;
-z = 21.6377;
-gamma = 0; % end effector orientation (need to see how this should change for theta1
-A = ik_2(7.7,13,12.4,12.6,x,y,z,0);
+
+
+FK = plot_robot(-pi/8,pi/3,-pi/6,-pi/6,"Forward"); %What it should look like
+x = FK(1,4);
+y = FK(2,4);
+z = FK(3,4);
+g = 0; %angle the end effector should be pointing (see note below)
+A = ik_2(FK);
+
+%NOTE:
+% Can likely determine the orientation of end effector from it's frame (the
+% output of the plot robot function gives the end effector frame). The only
+% thing I'm thinking could be an issue is determening which axis this should
+% be taken in reference too x or y? What we could alternatively do, is to
+% pass the whole frame into the IK function, then when we rotate it to
+% remove the effect of theta1, we know that gamma will be the rotation
+% around y, and can determine it from the rotated matrix that way. Needs to
+% be tested to see if that works. 
+% (ik_2 tries, and sort of fails to do this, need more work)
+%
+% For now tho, if you wanna ensure you don't have to fw the gamma variable,
+% just make sure theta2 theta3 and theta4 all add to 0. 
 
 %Parameters
 theta1 = A(1);
@@ -19,8 +31,11 @@ theta2 = A(2);
 theta3 = A(3);
 theta4 = A(4);
 
-plot_robot(theta1,theta2,theta3,theta4)%What the IK looks like
 
+IK = plot_robot(theta1,theta2,theta3,theta4,"Inverse"); %What the IK looks like
+
+disp(FK)
+disp(IK)
 
 function T = dh_transform(a, alpha, d, theta)
     T = [
@@ -30,10 +45,14 @@ function T = dh_transform(a, alpha, d, theta)
         0, 0, 0, 1];
 end
 
-function angles = ik_2(L1, L2, L3, L4, x, y, z, gamma)
-    a1 = atan2(y, x);
-    P = [cos(a1) -sin(a1); sin(a1) cos(a1)] * [x; z]; % Rotated x and z
-    P3 = P - [L4 * cos(gamma); L4 * sin(gamma) + L1];
+function angles = ik( x, y, z, gamma)
+    L1 = 7.7;
+    L2 = 13;
+    L3 = 12.6;
+    L4 = 12.4;
+    a1 = atan2(y,x) ;
+    P = [cos(-a1) -sin(-a1) 0 ; sin(-a1) cos(-a1) 0 ; 0 0 1] * [x ; y ; z]; % Rotate by -a1
+    P3 = [P(1) ; P(3)] - [L4 * cos(gamma); L4 * sin(gamma) + L1];
     
     c2 = (P3(1)^2 + P3(2)^2 - L2^2 - L3^2) / (2 * L2 * L3);
     c2 = max(min(c2, 1), -1);
@@ -46,7 +65,34 @@ function angles = ik_2(L1, L2, L3, L4, x, y, z, gamma)
     angles = [a1, a2, a3, a4];
 end
 
-function plot_robot(t1,t2,t3,t4)
+function angles = ik_2(frame)
+    % Assignments
+    L1 = 7.7;
+    L2 = 13;
+    L3 = 12.6;
+    L4 = 12.4;
+    x = frame(1,4);
+    y = frame(2,4);
+    z = frame(3,4);
+
+    % Rotate by theta1 to get onto x-z plane
+    a1 = atan2(y,x) ;
+    P = [cos(-a1) -sin(-a1) 0 0 ; sin(-a1) cos(-a1) 0 0 ; 0 0 1 0; 0 0 0 1] * frame; % Rotate by -a1
+    gamma = asin(P(3,1)) * -1;
+    P3 = [P(1,4) ; P(3,4)] - [L4 * cos(gamma); L4 * sin(gamma) + L1];
+    
+    c2 = (P3(1)^2 + P3(2)^2 - L2^2 - L3^2) / (2 * L2 * L3);
+    c2 = max(min(c2, 1), -1);
+    s2 = -sqrt(1 - c2^2); % Negative for elbow down
+
+    a2 = atan2(P3(2), P3(1)) - atan2((L3 * s2), (L2 + L3 * c2));
+    a3 = atan2(s2, c2);
+    a4 = gamma - a2 - a3;
+    
+    angles = [a1, a2, a3, a4];
+end
+
+function out = plot_robot(t1,t2,t3,t4,name)
     % DH Table
     DH = [
         0, 0, 7.7, t1;
@@ -77,8 +123,10 @@ function plot_robot(t1,t2,t3,t4)
     
     figure;
     hold on;
-    title("3D view")
+    title(name)
     line(positions(1,:),positions(2,:),positions(3,:))
     view(3)
     axis equal
+
+    out = T_0_5;
 end 
