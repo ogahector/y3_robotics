@@ -4,7 +4,7 @@ clc; clear all; close all;
 %pi/8 = 0.3927
 
 
-FK = plot_robot(-pi/8,pi/3,-pi/6,-pi/6,"Forward"); %What it should look like
+FK = plot_robot(-pi/7,pi/5,-pi/4,-pi/4,"Forward"); %What it should look like
 x = FK(1,4);
 y = FK(2,4);
 z = FK(3,4);
@@ -76,10 +76,20 @@ function angles = ik_2(frame)
     z = frame(3,4);
 
     % Rotate by theta1 to get onto x-z plane
-    a1 = atan2(y,x) ;
-    P = [cos(-a1) -sin(-a1) 0 0 ; sin(-a1) cos(-a1) 0 0 ; 0 0 1 0; 0 0 0 1] * frame; % Rotate by -a1
-    gamma = asin(P(3,1)) * -1;
-    P3 = [P(1,4) ; P(3,4)] - [L4 * cos(gamma); L4 * sin(gamma) + L1];
+    a1 = atan2(y, x);
+    R = [cos(-a1) -sin(-a1) 0; sin(-a1) cos(-a1) 0; 0 0 1];
+    P = R * frame(1:3, 4); % Rotate the position vector by -a1
+
+    % Extract the rotation matrix part of the frame
+    R_frame = frame(1:3, 1:3);
+
+    % Rotate the rotation matrix by -a1
+    R_rotated = R * R_frame;
+
+    % Find orientation from the rotated rotation matrix
+    gamma = atan2(R_rotated(2, 1), R_rotated(1, 1));
+
+    P3 = [P(1); P(3)] - [L4 * cos(gamma); L4 * sin(gamma) + L1];
     
     c2 = (P3(1)^2 + P3(2)^2 - L2^2 - L3^2) / (2 * L2 * L3);
     c2 = max(min(c2, 1), -1);
