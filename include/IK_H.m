@@ -60,7 +60,6 @@ end
     theta4_down = gamma - theta2 - theta3_down;
 
     if lower(config) == "up"
-        % fprintf("Using Up-configuration angles.\n")
         angles = [theta1, theta2, theta3_up, theta4_up];
     else
         angles = [theta1, theta2, theta3_down, theta4_down];

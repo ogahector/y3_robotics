@@ -52,9 +52,9 @@ write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_TORQUE_ENABLE, 0);
 verifyTxRxResult(port_num, PROTOCOL_VERSION);
 
 % maximums and minimums
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS);
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MIN_POS, MIN_POS);
 verifyTxRxResult(port_num, PROTOCOL_VERSION);
-write1ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS);
+write4ByteTxRx(port_num, PROTOCOL_VERSION, DXL_ID1, ADDR_MAX_POS, MAX_POS);
 verifyTxRxResult(port_num, PROTOCOL_VERSION);
 
 %% ---- Pre-Processing ---- %%

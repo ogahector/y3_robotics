@@ -1,3 +1,6 @@
 function pulse = dynRad2pulse(rad)
-    pulse = rad*4096/(2*pi);
+    deg = rad2deg(rad);
+    deg = wrapTo360(deg);
+    pulse = deg*4096/360;
+    pulse = typecast(int32(pulse), 'uint32');
 end

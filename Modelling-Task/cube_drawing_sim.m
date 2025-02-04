@@ -10,20 +10,33 @@ L4 = 12.4;  % Joint 4 to End-Effector
 
 
 % Determine cube coordinates
-cube_coords = 10 * [...
+basic_cube = 5 * [...
                 0    0    0;
-                0.5  0    0;
-                0.5  0.5  0;
-                0    0.5  0;
-                0    0    0.5;
-                0.5  0    0.5;
-                0.5  0.5  0.5;
-                0    0.5  0.5;
+                1  0    0;
+                1  1  0;
+                0    1  0;
+                0    0    1;
+                1  0    1;
+                1  1  1;
+                0    1  1;
               ];
+basic_cube = basic_cube + 10;
 
-cube_coords = cube_coords + 10;
+full_cube = 5 * [...
+                0    0    0;
+                1  0    0;
+                1  1  0;
+                0    1  0;
+                0    0    0;
 
+                0    0    1;
+                1  0    1;
+                1  1  1;
+                0    1  1;
+              ];
+full_cube = full_cube + 10;
 
+cube_coords = full_cube;
 plot_4dof_robot(0,0,0,0)
 gcf;
 grid on;
@@ -41,8 +54,9 @@ zlim([0 20])
 % Calculate intermediary points
 % store all points in a cell
 n = 20;
+[npoints, ~] = size(cube_coords);
 points = [];
-for i = 1 : 8-1
+for i = 1 : npoints - 1
     current = cube_coords(i, :);
     next = cube_coords(i + 1, :);
 
