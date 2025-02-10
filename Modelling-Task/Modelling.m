@@ -4,12 +4,12 @@ clc; clear all; close all;
 %pi/8 = 0.3927
 
 
-FK = plot_robot(-pi/7,pi/5,-pi/4,-pi/4,"Forward"); %What it should look like
+FK = plot_robot(-pi/7,pi/5,-pi/4,-pi/4,"Forward") %What it should look like
 x = FK(1,4);
 y = FK(2,4);
 z = FK(3,4);
 g = 0; %angle the end effector should be pointing (see note below)
-A = ik_2(FK);
+A = ik_2(FK)
 
 %NOTE:
 % Can likely determine the orientation of end effector from it's frame (the
@@ -87,7 +87,7 @@ function angles = ik_2(frame)
     R_rotated = R * R_frame;
 
     % Find orientation from the rotated rotation matrix
-    gamma = atan2(R_rotated(2, 1), R_rotated(1, 1));
+    gamma = atan2(R_rotated(3, 1), R_rotated(1, 1));
 
     P3 = [P(1); P(3)] - [L4 * cos(gamma); L4 * sin(gamma) + L1];
     
@@ -137,6 +137,10 @@ function out = plot_robot(t1,t2,t3,t4,name)
     line(positions(1,:),positions(2,:),positions(3,:))
     view(3)
     axis equal
+    grid on
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
 
     out = T_0_5;
 end 

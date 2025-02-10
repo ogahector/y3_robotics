@@ -1,4 +1,8 @@
 function angles = IK_H(frame, config)
+arguments
+    frame double = eye(4)
+    config string = ""
+end
 %% ---- Check Transform Homogeneity ---- %%
 if frame(4, :) ~= [0 0 0 1]
     error('The pose provided is a non-homogeneous transform!')
@@ -58,6 +62,11 @@ end
 %% ---- Theta4 infer from gamma ---- %%
     theta4_up = gamma - theta2 - theta3_up;
     theta4_down = gamma - theta2 - theta3_down;
+
+    if isempty(config)
+        angles = [theta1, theta2, theta3_down, theta4_down];
+        return
+    end
 
     if lower(config) == "up"
         angles = [theta1, theta2, theta3_up, theta4_up];
