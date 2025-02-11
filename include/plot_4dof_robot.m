@@ -47,7 +47,7 @@ function plot_4dof_robot(theta1, theta2, theta3, theta4)
     % Plot coordinate axes at each joint
     axis_length = 3;  % Length of axes for visualization
     colors = ['r', 'g', 'b'];  % RGB for XYZ axes
-    for i = 1:n_dh
+    for i = 1 : n_dh
         R = T{i}(1:3, 1:3);  % Rotation matrix
         pos = T{i}(1:3, 4);  % Position
         
