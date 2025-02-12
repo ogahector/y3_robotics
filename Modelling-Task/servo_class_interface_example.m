@@ -14,20 +14,28 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                     = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM7';
+DEVICENAME                  = 'COM10';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-base = ServoDynamixel('Base Rotator', DXL_ID1, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, 180, -1);
 
-shoulder = ServoDynamixel('Shoulder Joint', DXL_ID2, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, 270-10.62, -1);
+[lib_name, ~, ~] = startup_load_libraries();
 
-elbow = ServoDynamixel('Elbow Joint', DXL_ID3, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, 90+10.62, -1);
+port_num = portHandler(DEVICENAME);
+safeOpenPort(port_num, lib_name);
 
-wrist = ServoDynamixel('Wrist Joint', DXL_ID4, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, 180, -1);
+safeSetBaudrate(port_num, BAUDRATE, lib_name);
+
+base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
+                        DEVICENAME, BAUDRATE, port_num);
+
+shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
+                        DEVICENAME, BAUDRATE, port_num);
+
+elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
+                        DEVICENAME, BAUDRATE, port_num);
+
+wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
+                        DEVICENAME, BAUDRATE, port_num);
 
 %% ---- Process Points to Visit ---- %%
 cube_coords = 5 * [...
@@ -67,16 +75,19 @@ angles = rad2deg(angles);
 
 %% ---- Configure ---- %%
 % Disable torque <=> enable configuration
-base.disableTorque()
-shoulder.disableTorque()
-elbow.disableTorque()
-wrist.disableTorque()
+% base.disableTorque()
+% shoulder.disableTorque()
+% elbow.disableTorque()
+% wrist.disableTorque()
+
+% Assign homing offset
+% base.setOffsetDeg(180);
 
 % Assign max and minimums
-base.setRotationLimitsDeg(90, -90);
-shoulder.setRotationLimitsDeg(0, 360);
-elbow.setRotationLimitsDeg(0, 360);
-wrist.setRotationLimitsDeg(0, 360);
+% base.setRotationLimitsDeg(90, -90);
+% shoulder.setRotationLimitsDeg(0, 360);
+% elbow.setRotationLimitsDeg(0, 360);
+% wrist.setRotationLimitsDeg(0, 360);
 
 %% ---- Move ---- %%
 
@@ -86,14 +97,21 @@ elbow.enableTorque()
 wrist.enableTorque()
 pause(1)
 
-for i = 1 : length(angles)
-    base.moveToDeg(angles(1, i));
-    shoulder.moveToDeg(angles(2, i));
-    elbow.moveToDeg(angles(3, i));
-    wrist.moveToDeg(angles(4, i));
+base.moveToDeg(180)
+shoulder.moveToDeg(200)
+elbow.moveToDeg(165)
+wrist.moveToDeg(180)
 
-    pause(0.5) % not meant to move for very long: short time should be fine
-end
+% for i = 1 : length(angles)
+%     base.moveToDeg(angles(1, i));
+%     shoulder.moveToDeg(angles(2, i));
+%     elbow.moveToDeg(angles(3, i));
+%     wrist.moveToDeg(angles(4, i));
+% 
+%     pause(0.5) % not meant to move for very long: short time should be fine
+% end
+
+pause(10)
 
 %% ---- End ---- %%
 base.disableTorque()

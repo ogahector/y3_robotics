@@ -3,31 +3,33 @@
 % to make code 100x cleaner
 classdef ServoDynamixel
     properties (Access = public)
-        name {mustBeNonzeroLengthText};
+        % name {mustBeNonzeroLengthText};
+        name;
     
-        lib_name {mustBeText};
-        SERVO_ID {mustBeText};
-        PROTOCOL_VERSION {mustBeNumeric};
-        port_num {mustBeText};
+        lib_name;
+        SERVO_ID;
+        PROTOCOL_VERSION
+        port_num
 
         ADDR = struct();
     end
 
     methods
         function obj = ServoDynamixel(name, SERVO_ID, PROTOCOL_VERSION, ...
-                                    DEVICENAME, BAUDRATE)
+                                    DEVICENAME, BAUDRATE, port_num)
 
             if ~libisloaded('shrlibsample')
                 addpath(fullfile(matlabroot,'extern','examples','shrlib'))
                 loadlibrary('shrlibsample')
             end
 
-            [obj.lib_name, ~, ~] = startup_load_libraries();
-
-            obj.port_num = portHandler(DEVICENAME);
-            safeOpenPort();
-
-            safeSetBaudrate(obj.port_num, BAUDRATE, obj.lib_name);
+            % [obj.lib_name, ~, ~] = startup_load_libraries();
+            % 
+            % obj.port_num = portHandler(DEVICENAME);
+            % safeOpenPort(obj.port_num, obj.lib_name);
+            % 
+            % safeSetBaudrate(obj.port_num, BAUDRATE, obj.lib_name);
+            obj.port_num = port_num;
             obj.SERVO_ID = SERVO_ID;
             obj.PROTOCOL_VERSION = PROTOCOL_VERSION;
 
@@ -44,13 +46,17 @@ classdef ServoDynamixel
             obj.ADDR.HOMING_OFFSET       = 20;
             obj.ADDR.OPERATING_MODE      = 11;
             obj.ADDR.IS_MOVING           = 122;
+
+            fprintf("Servo "+name+" has been initialised correctly!\n");
         end
 
 %% Dynamixel - related methods
         function obj = disableTorque(obj)
+            fprintf("Disabling Torque for "+obj.name+"\n");
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
                 obj.SERVO_ID, obj.ADDR.TORQUE_ENABLE, 0);
             verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
+            fprintf("Disabled Torque for "+obj.name+"\n");
         end
 
         function obj = enableTorque(obj)
