@@ -74,5 +74,5 @@ end
         angles = [theta1, theta2, theta3_down, theta4_down];
     end
 
-    angles = [theta1, -theta2, -theta3_down, -theta4_down];
+    angles = [theta1, theta2, theta3_down, theta4_down];
 end

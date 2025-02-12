@@ -21,21 +21,21 @@ DEVICENAME                  = 'COM10';
 [lib_name, ~, ~] = startup_load_libraries();
 
 port_num = portHandler(DEVICENAME);
+packetHandler();
 safeOpenPort(port_num, lib_name);
-
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, port_num);
+                        port_num, 180, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, port_num);
+                        port_num, +270 - 10.62, -1);
 
 elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, port_num);
+                        port_num, +90 + 10.62, -1);
 
 wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
-                        DEVICENAME, BAUDRATE, port_num);
+                        port_num, 180, -1);
 
 %% ---- Process Points to Visit ---- %%
 cube_coords = 5 * [...
@@ -62,23 +62,29 @@ for i = 1 : npoints - 1
     points = [points, cubic_interpol(current, next, n)];
 end
 
-angles = zeros(4, length(points));
+% angles = zeros(4, length(points));
+angles = [];
 % assuming orientation 0
 for i = 1 : length(points)
     T = [eye(3), points(:, i); 0 0 0 1];
 
-    angles(:, i) = IK_H(T);
+    angles(i, :) = IK_H(T);
     % angles(:, i) = angle_to_servo(angles(:, i));
 end
 
-angles = rad2deg(angles);
+% angles = rad2deg(angles);
 
 %% ---- Configure ---- %%
 % Disable torque <=> enable configuration
-% base.disableTorque()
-% shoulder.disableTorque()
-% elbow.disableTorque()
-% wrist.disableTorque()
+base.disableTorque()
+shoulder.disableTorque()
+elbow.disableTorque()
+wrist.disableTorque()
+
+base.setMaxSpeed(30)
+shoulder.setMaxSpeed(30)
+elbow.setMaxSpeed(30)
+wrist.setMaxSpeed(30)
 
 % Assign homing offset
 % base.setOffsetDeg(180);
@@ -97,19 +103,30 @@ elbow.enableTorque()
 wrist.enableTorque()
 pause(1)
 
-base.moveToDeg(180)
-shoulder.moveToDeg(200)
-elbow.moveToDeg(165)
-wrist.moveToDeg(180)
+base.moveToDeg(0)
+shoulder.moveToDeg(90)
+elbow.moveToDeg(-90)
+wrist.moveToDeg(0)
 
+% figure
 % for i = 1 : length(angles)
-%     base.moveToDeg(angles(1, i));
-%     shoulder.moveToDeg(angles(2, i));
-%     elbow.moveToDeg(angles(3, i));
-%     wrist.moveToDeg(angles(4, i));
-% 
-%     pause(0.5) % not meant to move for very long: short time should be fine
+%     clf
+%     plot_4dof_robot(angles(i, 1), angles(i, 2), angles(i, 3), angles(i, 4));
+%     drawnow
 % end
+
+pause(1)
+angles = rad2deg(angles);
+for i = 1 : length(angles)
+    base.moveToDeg(angles(i, 1));
+    shoulder.moveToDeg(angles(i, 2));
+    elbow.moveToDeg(angles(i, 3));
+    wrist.moveToDeg(angles(i, 4));
+
+    % pause(0.5) % not meant to move for very long: short time should be fine
+end
+
+
 
 pause(10)
 

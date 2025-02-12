@@ -12,16 +12,26 @@ classdef ServoDynamixel
         port_num
 
         ADDR = struct();
+
+        userAngle2Servo = @(userAngle) userAngle;
+        servoAngle2User = @(servoAngle) servoAngle;
+
     end
 
     methods
         function obj = ServoDynamixel(name, SERVO_ID, PROTOCOL_VERSION, ...
-                                    DEVICENAME, BAUDRATE, port_num)
+                                    port_num, offset, scale)
 
             if ~libisloaded('shrlibsample')
                 addpath(fullfile(matlabroot,'extern','examples','shrlib'))
                 loadlibrary('shrlibsample')
             end
+
+            if isempty(scale) || scale == 0
+                scale = 1;
+            end
+            obj.userAngle2Servo = @(userAngle) scale*userAngle + offset;
+            obj.servoAngle2User = @(servoAngle) (servoAngle - offset) / scale;
 
             % [obj.lib_name, ~, ~] = startup_load_libraries();
             % 
@@ -46,8 +56,14 @@ classdef ServoDynamixel
             obj.ADDR.HOMING_OFFSET       = 20;
             obj.ADDR.OPERATING_MODE      = 11;
             obj.ADDR.IS_MOVING           = 122;
+            obj.ADDR.PROFILE_VELOCITY    = 112;
 
             fprintf("Servo "+name+" has been initialised correctly!\n");
+        end
+
+        function obj = setAngleOffset(obj, offset, scale)
+            obj.userAngle2Servo = @(userAngle) scale*userAngle + offset;
+            obj.servoAngle2User = @(servoAngle) (servoAngle - offset) / scale;
         end
 
 %% Dynamixel - related methods
@@ -79,8 +95,8 @@ classdef ServoDynamixel
         end
 
         function obj = setRotationLimitsDeg(obj, min, max)
-            % min = obj.angleDegUser2Servo(min);
-            % max = obj.angleDegUser2Servo(max);
+            min = obj.userAngle2Servo(min);
+            max = obj.userAngle2Servo(max);
 
             obj.disableTorque()
 
@@ -95,7 +111,7 @@ classdef ServoDynamixel
         end
 
         function obj = moveToDeg(obj, target)
-            % target = obj.angleDegUser2Servo(target);
+            target = obj.userAngle2Servo(target);
             obj.moveToPulse(dynDeg2pulse(target));
         end
 
@@ -108,7 +124,7 @@ classdef ServoDynamixel
         function current_ang = getCurrentPositionDeg(obj)
             current_pos = obj.getCurrentPositionPulse();
             current_ang = dynPulse2deg(current_pos);
-            % current_ang = obj.angleDegServo2User(current_ang);
+            current_ang = obj.servoAngle2User(current_ang);
         end
 
         function current_vel = getCurrentVelocity(obj)
@@ -118,8 +134,12 @@ classdef ServoDynamixel
         end
 
         function obj = setMaxSpeed(obj, maxspeedrad)
+            % write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
+            %                 obj.SERVO_ID, obj.ADDR.MAX_VEL, maxspeedrad);
+            % verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
+
             write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
-                            obj.SERVO_ID, obj.ADDR.MAX_VEL, maxspeedrad);
+                            obj.SERVO_ID, obj.ADDR.PROFILE_VELOCITY, maxspeedrad);
             verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
         end
 
