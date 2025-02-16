@@ -47,6 +47,7 @@ classdef ServoDynamixel
 
             obj.ADDR.TORQUE_ENABLE       = 64;           
             obj.ADDR.GOAL_POSITION       = 116; 
+            obj.ADDR.GOAL_CURRENT        = 102;
             obj.ADDR.PRESENT_POSITION    = 132; 
             obj.ADDR.PRESENT_VELOCITY    = 128;
             obj.ADDR.OPERATING_MODE      = 11;
@@ -169,6 +170,14 @@ classdef ServoDynamixel
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
                             obj.SERVO_ID, obj.ADDR.OPERATING_MODE, mode);
             verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+
+        %For current-based mode, should prevent current form getting too
+        %high when trying to close gripper
+        function obj = setGoalCurrent(obj,current)
+            write2ByteToRx(obj.port_num, obj.PROTOCOL_VERSION,...
+                            obj.SERVO_ID, obj.ADDR.GOAL_CURRENT, current);
+            verifyTxRxResult(obj.port_num,obj.PROTOCOL_VERSION);
         end
 
         function ismoving = isMoving(obj)
