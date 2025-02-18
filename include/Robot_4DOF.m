@@ -33,17 +33,20 @@ classdef Robot_4DOF
                 move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T)
             end
         end
+
+        function obj = move(obj, point) % point is a row vector
+            T = [eye(3) point ; 0 0 0 1];
+            move_to_point(obj.base, obj.shoulder, obj.elbow, obj.wrist, T);
+        end
         
         %Assuming here grippper is in current based position mode (Check
         %this)
         function obj = open_gripper(obj)
-            obj.finger.setGoalCurrent(0);
-            obj.finger.moveToPulse(0);% This was set arbitrarily, since we haven't checked this servo yet
+            obj.finger.moveToDeg(85);% This was set arbitrarily, since we haven't checked this servo yet
         end
             
         function obj = close_gripper(obj)
-            ojb.finger.setGoalCurrent(25) %Again, arbitrary
-            obj.finger.moveToPulse(2048)
+            obj.finger.moveToDeg(230);
         end
     end
 end

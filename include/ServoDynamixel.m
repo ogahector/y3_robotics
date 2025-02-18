@@ -164,8 +164,12 @@ classdef ServoDynamixel
                 mode = 0;
             elseif contains(mode, 'vel')
                 mode = 1;
+            elseif contains(mode, 'pos')
+                mode = 3
+            elseif contains(mode, 'curpos')
+                mode = 5
             else 
-                mode = 2;
+                mode = 3;
             end
             write1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
                             obj.SERVO_ID, obj.ADDR.OPERATING_MODE, mode);
@@ -175,7 +179,7 @@ classdef ServoDynamixel
         %For current-based mode, should prevent current form getting too
         %high when trying to close gripper
         function obj = setGoalCurrent(obj,current)
-            write2ByteToRx(obj.port_num, obj.PROTOCOL_VERSION,...
+            write2ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION,...
                             obj.SERVO_ID, obj.ADDR.GOAL_CURRENT, current);
             verifyTxRxResult(obj.port_num,obj.PROTOCOL_VERSION);
         end

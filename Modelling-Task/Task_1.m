@@ -17,6 +17,7 @@ BAUDRATE                    = 1000000;
 DEVICENAME                  = '/dev/ttyUSB0';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+POINT = [15 ; 0 ; 25];
 
 [lib_name, ~, ~] = startup_load_libraries();
 
@@ -37,40 +38,23 @@ elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
 wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
                         port_num, 180, -1);
 
+finger = ServoDynamixel("Finger Joint", DXL_ID5, PROTOCOL_VERSION, ...
+                        port_num, 180, -1);
+
+finger.setOperatingMode('curpos');
+finger.setGoalCurrent(30);%80 ma in practice, check doc
+robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
+
+
 %% ---- Process Points to Visit ---- %%
-cube_coords = 5 * [...
-                0    0    0;
-                1  0    0;
-                1  1  0;
-                0    1  0;
-                0    0    0;
-
-                0    0    1;
-                1  0    1;
-                1  1  1;
-                0    1  1;
+cube_coords = [...
+                10    0    10;
               ];
-cube_coords = cube_coords + 10;
+%%cube_coords = cube_coords + 10;
 
-n = 20;
-[npoints, ~] = size(cube_coords);
-points = [];
-for i = 1 : npoints - 1
-    current = cube_coords(i, :);
-    next = cube_coords(i + 1, :);
 
-    points = [points, cubic_interpol(current, next, n)];
-end
 
-% angles = zeros(4, length(points));
-angles = [];
-% assuming orientation 0
-for i = 1 : length(points)
-    T = [eye(3), points(:, i); 0 0 0 1];
 
-    angles(i, :) = IK_H(T);
-    % angles(:, i) = angle_to_servo(angles(:, i));
-end
 
 % angles = rad2deg(angles);
 
@@ -97,16 +81,22 @@ wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
 
-base.enableTorque()
-shoulder.enableTorque()
-elbow.enableTorque()
-wrist.enableTorque()
+base.enableTorque();
+shoulder.enableTorque();
+elbow.enableTorque();
+wrist.enableTorque();
+finger.enableTorque();
 pause(1)
 
-base.moveToDeg(0)
+base.moveToDeg(-90)
 shoulder.moveToDeg(90)
 elbow.moveToDeg(-90)
 wrist.moveToDeg(0)
+pause(5)
+
+robot.open_gripper();
+pause(4)
+robot.close_gripper();
 
 % figure
 % for i = 1 : length(angles)
@@ -115,16 +105,18 @@ wrist.moveToDeg(0)
 %     drawnow
 % end
 
-pause(1)
-angles = rad2deg(angles);
-for i = 1 : length(angles)
-    base.moveToDeg(angles(i, 1));
-    shoulder.moveToDeg(angles(i, 2));
-    elbow.moveToDeg(angles(i, 3));
-    wrist.moveToDeg(angles(i, 4));
 
-    % pause(4) % not meant to move for very long: short time should be fine
-end
+% robot.move(POINT);
+
+% n = 20;
+% [npoints, ~] = size(cube_coords);
+% points = [];
+% for i = 1 : npoints - 1
+%     current = cube_coords(i, :);
+%     next = cube_coords(i + 1, :);
+%     robot.move_cubic(current, next, n);
+%     pause(0.5);
+% end
 
 
 
