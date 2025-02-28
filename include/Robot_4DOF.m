@@ -89,5 +89,13 @@ classdef Robot_4DOF
             obj.wrist.disableTorque();
             obj.finger.disableTorque();
         end
+
+        function angles = getAngles(obj)
+            angles(1) = obj.base.getCurrentPositionDeg();
+            angles(2) = obj.shoulder.getCurrentPositionDeg();
+            angles(3) = obj.elbow.getCurrentPositionDeg();
+            angles(4) = obj.wrist.getCurrentPositionDeg();
+        end
+
     end
 end
