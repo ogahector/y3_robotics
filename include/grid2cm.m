@@ -1,1 +1,3 @@
-function [newx, newy, newz] = grid2cm()
+function pointcm = grid2cm(gridpoint)
+    pointcm = 2.54*gridpoint;
+end

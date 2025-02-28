@@ -58,6 +58,7 @@ classdef ServoDynamixel
             obj.ADDR.OPERATING_MODE      = 11;
             obj.ADDR.IS_MOVING           = 122;
             obj.ADDR.PROFILE_VELOCITY    = 112;
+            obj.ADDR.MOVING_THRESHOLD    = 24;
 
             fprintf("Servo "+name+" has been initialised correctly!\n");
         end
@@ -184,10 +185,17 @@ classdef ServoDynamixel
             verifyTxRxResult(obj.port_num,obj.PROTOCOL_VERSION);
         end
 
+        function obj = setMovingThreshold(obj, threshPulse)
+            write4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
+                obj.SERVO_ID, obj.ADDR.MOVING_THRESHOLD, threshPulse);
+            verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
+        end
+
         function ismoving = isMoving(obj)
             ismoving = read1ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
                                     obj.SERVO_ID, obj.ADDR.IS_MOVING);
-            ismoving = boolean(ismoving);
+            verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
+            % ismoving = ~ismoving;
         end
     end
 end

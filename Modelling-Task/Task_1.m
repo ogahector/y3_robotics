@@ -12,7 +12,7 @@ DXL_ID1                     = 11;
 DXL_ID2                     = 12;
 DXL_ID3                     = 13;
 DXL_ID4                     = 14;
-DXL_ID5                     = 15;
+DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
 DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,6 +41,13 @@ wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
 finger = ServoDynamixel("Finger Joint", DXL_ID5, PROTOCOL_VERSION, ...
                         port_num, 0, 1);
 
+mov_threshold = 1;
+base.setMovingThreshold(mov_threshold);
+shoulder.setMovingThreshold(mov_threshold);
+elbow.setMovingThreshold(mov_threshold);
+wrist.setMovingThreshold(mov_threshold);
+finger.setMovingThreshold(mov_threshold);
+
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
@@ -61,13 +68,13 @@ robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
 %               ];
 % cube_coords = cube_coords + 10;
 
-cube_l
+cube_len = 2.5;
 
 coords = [
-    22.5, 0, 14;
-    22.5, 0, 7;
-    22.5*cosd(45), 22.5*sind(45), 14;
-    22.5*cosd(45), 22.5*sind(45), 7;
+    grid2cm([9, 0, 6]);
+    grid2cm([9, 0, 3]);
+    grid2cm([5, 5, 6]);
+    grid2cm([5, 5, 3]);
 ];
 
 
@@ -109,11 +116,11 @@ base.moveToDeg(-90)
 shoulder.moveToDeg(90)
 elbow.moveToDeg(-90)
 wrist.moveToDeg(0)
-pause(1)
+robot.waitUntilDone();
 robot.open_gripper();
-pause(1)
+robot.waitUntilDone();
 robot.close_gripper();
-pause(2)
+robot.waitUntilDone();
 % figure
 % for i = 1 : length(angles)
 %     clf
@@ -123,24 +130,24 @@ pause(2)
 
 
 robot.move(coords(1, :)', 90);
-pause(1)
+robot.waitUntilDone();
 robot.open_gripper();
-pause(1)
+robot.waitUntilDone();
 robot.move(coords(2, :)', 90);
-pause(1)
+robot.waitUntilDone();
 robot.close_gripper();
-pause(1)
+robot.waitUntilDone();
 robot.move(coords(1, :)', 90);
-pause(1)
+robot.waitUntilDone();
 
 robot.move(coords(3, :)', 90);
-pause(1)
+robot.waitUntilDone();
 robot.move(coords(4, :)', 90);
-pause(1)
+robot.waitUntilDone();
 robot.open_gripper();
-pause(1)
+robot.waitUntilDone();
 robot.move(coords(3, :)', 90);
-pause(1)
+robot.waitUntilDone();
 
 
 % n = 20;

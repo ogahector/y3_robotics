@@ -15,6 +15,19 @@ classdef Robot_4DOF
             obj.elbow = elbow;
             obj.wrist = wrist;
             obj.finger = finger;%Might wanna ensure mode here
+
+            mov_threshold = 1;
+            base.setMovingThreshold(mov_threshold);
+            shoulder.setMovingThreshold(mov_threshold);
+            elbow.setMovingThreshold(mov_threshold);
+            wrist.setMovingThreshold(mov_threshold);
+            finger.setMovingThreshold(mov_threshold);
+
+            maxspeed = 30;
+            base.setMaxSpeed(maxspeed);
+            shoulder.setMaxSpeed(maxspeed);
+            elbow.setMaxSpeed(maxspeed);
+            wrist.setMaxSpeed(maxspeed);
             fprintf("Initialised Robot")
         end
         
@@ -88,6 +101,96 @@ classdef Robot_4DOF
             obj.elbow.disableTorque();
             obj.wrist.disableTorque();
             obj.finger.disableTorque();
+        end
+
+        function ismoving = isMoving(obj)
+            ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
+                   || isMoving(obj.elbow) || isMoving(obj.wrist) ...
+                   || isMoving(obj.finger);
+        end
+
+        function obj = waitUntilDone(obj)
+            while obj.isMoving()
+                pause(0.1)
+            end
+        end
+
+
+        %% ---- ROUTINES ---- %%
+        function obj = initMovementRoutine(obj)
+            obj.disableTorque();
+
+            obj.base.enableTorque();
+            obj.shoulder.enableTorque();
+            obj.elbow.enableTorque();
+            obj.wrist.enableTorque();
+            obj.finger.enableTorque();
+            pause(1)
+            
+            obj.base.moveToDeg(-90)
+            obj.shoulder.moveToDeg(90)
+            obj.elbow.moveToDeg(-90)
+            obj.wrist.moveToDeg(0)
+            obj.waitUntilDone();
+            obj.open_gripper();
+            obj.waitUntilDone();
+            obj.close_gripper();
+            obj.waitUntilDone();
+        end
+
+        %% ---- TASKS ---- %%
+        function obj = Task1a(obj, grid_start1, grid_end1, ...
+                                grid_start2, grid_end2, ...
+                                grid_start3, grid_end3)
+            coords = [
+                grid2cm([grid_start1, 6]);
+                grid2cm([grid_start1, 3]);
+
+                grid2cm([grid_end1, 6]);
+                grid2cm([grid_end1, 3]);
+
+                grid2cm([grid_start2, 6]);
+                grid2cm([grid_start2, 3]);
+
+                grid2cm([grid_end2, 6]);
+                grid2cm([grid_end2, 3]);
+
+                grid2cm([grid_start3, 6]);
+                grid2cm([grid_start3, 3]);
+
+                grid2cm([grid_end3, 6]);
+                grid2cm([grid_end3, 3]);
+            ];
+
+            obj.disableTorque();
+
+            obj.initMovementRoutine();
+
+            for i = 1 : 3
+                % i'm aware this + 3*(i-1) looks cursed, i'm sorry
+                robot.move(coords(1 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+                robot.open_gripper();
+                robot.waitUntilDone();
+                robot.move(coords(2 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+                robot.close_gripper();
+                robot.waitUntilDone();
+                robot.move(coords(1 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+                
+                robot.move(coords(3 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+                robot.move(coords(4 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+                robot.open_gripper();
+                robot.waitUntilDone();
+                robot.move(coords(3 + 3*(i-1), :)', 90);
+                robot.waitUntilDone();
+            end
+
+            fprintf("Task1A Done!\n");
+            pause(5);
         end
     end
 end
