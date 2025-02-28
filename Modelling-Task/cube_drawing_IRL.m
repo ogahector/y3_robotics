@@ -136,7 +136,7 @@ end
 angles = [];
 for i = 1 : npoints
     T = [eye(3), points(:, i); 0 0 0 1];
-    angles(1:4, i) = IK_H(T, 'up')';
+    angles(1:4, i) = IK(T, 'up')';
     % angles(1:4, i) = 
     angles(1, i) = dynRad2pulse(angles(1, i));
     angles(2, i) = dynRad2pulse(angles(1, i));

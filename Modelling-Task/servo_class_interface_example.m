@@ -68,7 +68,7 @@ angles = [];
 for i = 1 : length(points)
     T = [eye(3), points(:, i); 0 0 0 1];
 
-    angles(i, :) = IK_H(T);
+    angles(i, :) = IK(T);
     % angles(:, i) = angle_to_servo(angles(:, i));
 end
 

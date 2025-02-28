@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                     = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = '/dev/ttyUSB0';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -39,19 +39,36 @@ wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
                         port_num, 180, -1);
 
 finger = ServoDynamixel("Finger Joint", DXL_ID5, PROTOCOL_VERSION, ...
-                        port_num, 180, -1);
+                        port_num, 0, 1);
 
-finger.setOperatingMode('curpos');
-finger.setGoalCurrent(30);%80 ma in practice, check doc
+% finger.setOperatingMode('pos');
+% finger.setGoalCurrent(80);%80 ma in practice, check doc
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
 
 
 %% ---- Process Points to Visit ---- %%
-cube_coords = [...
-                10    0    10;
-              ];
-%%cube_coords = cube_coords + 10;
+% cube_coords = 5 * [...
+%                 0    0    0;
+%                 1  0    0;
+%                 1  1  0;
+%                 0    1  0;
+%                 0    0    0;
+% 
+%                 0    0    1;
+%                 1  0    1;
+%                 1  1  1;
+%                 0    1  1;
+%               ];
+% cube_coords = cube_coords + 10;
 
+cube_l
+
+coords = [
+    22.5, 0, 14;
+    22.5, 0, 7;
+    22.5*cosd(45), 22.5*sind(45), 14;
+    22.5*cosd(45), 22.5*sind(45), 7;
+];
 
 
 
@@ -92,12 +109,11 @@ base.moveToDeg(-90)
 shoulder.moveToDeg(90)
 elbow.moveToDeg(-90)
 wrist.moveToDeg(0)
-pause(5)
-
+pause(1)
 robot.open_gripper();
-pause(4)
+pause(1)
 robot.close_gripper();
-
+pause(2)
 % figure
 % for i = 1 : length(angles)
 %     clf
@@ -106,27 +122,47 @@ robot.close_gripper();
 % end
 
 
-% robot.move(POINT);
+robot.move(coords(1, :)', 90);
+pause(1)
+robot.open_gripper();
+pause(1)
+robot.move(coords(2, :)', 90);
+pause(1)
+robot.close_gripper();
+pause(1)
+robot.move(coords(1, :)', 90);
+pause(1)
+
+robot.move(coords(3, :)', 90);
+pause(1)
+robot.move(coords(4, :)', 90);
+pause(1)
+robot.open_gripper();
+pause(1)
+robot.move(coords(3, :)', 90);
+pause(1)
+
 
 % n = 20;
-% [npoints, ~] = size(cube_coords);
+% [npoints, ~] = size(coords);
 % points = [];
 % for i = 1 : npoints - 1
-%     current = cube_coords(i, :);
-%     next = cube_coords(i + 1, :);
-%     robot.move_cubic(current, next, n);
+%     current = coords(i, :);
+%     next = coords(i + 1, :);
+%     robot.move_cubic(current, next, n, 0);
 %     pause(0.5);
 % end
 
 
 
-pause(10)
+pause(5)
 
 %% ---- End ---- %%
 base.disableTorque()
 shoulder.disableTorque()
 elbow.disableTorque()
 wrist.disableTorque()
+finger.disableTorque()
 
 closePort(port_num);
 fprintf('Port Closed \n');

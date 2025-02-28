@@ -165,9 +165,9 @@ classdef ServoDynamixel
             elseif contains(mode, 'vel')
                 mode = 1;
             elseif contains(mode, 'pos')
-                mode = 3
+                mode = 3;
             elseif contains(mode, 'curpos')
-                mode = 5
+                mode = 5;
             else 
                 mode = 3;
             end
