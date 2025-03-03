@@ -68,13 +68,30 @@ robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
 %               ];
 % cube_coords = cube_coords + 10;
 
-cube_len = 2.5;
+grid_start1 = [9, 0];
+grid_end1 = [5, 5];
+
+grid_start2 = [6, 7];
+grid_end2 = [4, 2];
+
+grid_start3 = [5, 5];
+grid_end3 = [9, 0];
 
 coords = [
-    grid2cm([9, 0, 6]);
-    grid2cm([9, 0, 3]);
-    grid2cm([5, 5, 6]);
-    grid2cm([5, 5, 3]);
+    grid2cm([grid_start1, 6]);
+    grid2cm([grid_start1, 3]);
+    grid2cm([grid_end1, 6]);
+    grid2cm([grid_end1, 3]);
+    
+    grid2cm([grid_start2, 6]);
+    grid2cm([grid_start2, 3]);
+    grid2cm([grid_end2, 6]);
+    grid2cm([grid_end2, 3]);
+
+    grid2cm([grid_start3, 6]);
+    grid2cm([grid_start3, 3]);
+    grid2cm([grid_end3, 6]);
+    grid2cm([grid_end3, 3]);
 ];
 
 
@@ -94,15 +111,6 @@ shoulder.setMaxSpeed(30)
 elbow.setMaxSpeed(30)
 wrist.setMaxSpeed(30)
 
-% Assign homing offset
-% base.setOffsetDeg(180);
-
-% Assign max and minimums
-% base.setRotationLimitsDeg(90, -90);
-% shoulder.setRotationLimitsDeg(0, 360);
-% elbow.setRotationLimitsDeg(0, 360);
-% wrist.setRotationLimitsDeg(0, 360);
-
 %% ---- Move ---- %%
 
 base.enableTorque();
@@ -112,64 +120,47 @@ wrist.enableTorque();
 finger.enableTorque();
 pause(1)
 
-base.moveToDeg(-90)
-shoulder.moveToDeg(90)
-elbow.moveToDeg(-90)
-wrist.moveToDeg(0)
-robot.waitUntilDone();
-robot.open_gripper();
-robot.waitUntilDone();
-robot.close_gripper();
-robot.waitUntilDone();
-% figure
-% for i = 1 : length(angles)
-%     clf
-%     plot_4dof_robot(angles(i, 1), angles(i, 2), angles(i, 3), angles(i, 4));
-%     drawnow
-% end
+%% ---- MOVE USING CUBIC ---- %%
 
-
-robot.move(coords(1, :)', 90);
-robot.waitUntilDone();
-robot.open_gripper();
-robot.waitUntilDone();
-robot.move(coords(2, :)', 90);
-robot.waitUntilDone();
-robot.close_gripper();
-robot.waitUntilDone();
-robot.move(coords(1, :)', 90);
+% Init
+% robot.move([15; 0; 20], 90);
+robot.initMovementRoutine([15; 0; 20]);
 robot.waitUntilDone();
 
-robot.move(coords(3, :)', 90);
-robot.waitUntilDone();
-robot.move(coords(4, :)', 90);
-robot.waitUntilDone();
-robot.open_gripper();
-robot.waitUntilDone();
-robot.move(coords(3, :)', 90);
-robot.waitUntilDone();
-
-
-% n = 20;
-% [npoints, ~] = size(coords);
-% points = [];
-% for i = 1 : npoints - 1
-%     current = coords(i, :);
-%     next = coords(i + 1, :);
-%     robot.move_cubic(current, next, n, 0);
-%     pause(0.5);
-% end
-
+for i = 0 : 2
+    ind = 4*i;
+    % robot.move(coords(1, :)', 90);
+    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 20, 90);
+    robot.waitUntilDone();
+    robot.open_gripper();
+    robot.waitUntilDone();
+    % robot.move(coords(2, :)', 90);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 20, 90);
+    robot.waitUntilDone();
+    robot.close_gripper();
+    robot.waitUntilDone();
+    % robot.move(coords(1, :)', 90);
+    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 20, 90);
+    robot.waitUntilDone();
+    
+    % robot.move(coords(3, :)', 90);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 20, 90);
+    robot.waitUntilDone();
+    % robot.move(coords(4, :)', 90);
+    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 20, 90);
+    robot.waitUntilDone();
+    robot.open_gripper();
+    robot.waitUntilDone();
+    % robot.move(coords(3, :)', 90);
+    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 20, 90);
+    robot.waitUntilDone();
+end
 
 
 pause(5)
 
 %% ---- End ---- %%
-base.disableTorque()
-shoulder.disableTorque()
-elbow.disableTorque()
-wrist.disableTorque()
-finger.disableTorque()
+robot.disableTorque();
 
 closePort(port_num);
 fprintf('Port Closed \n');

@@ -82,6 +82,10 @@ classdef Robot_4DOF
         function obj = open_gripper(obj)
             obj.finger.moveToDeg(250);% This was set arbitrarily, since we haven't checked this servo yet
         end
+
+        function obj = open_gripper_slightly(obj)
+            obj.finger.moveToDeg(200);
+        end
             
         function obj = close_gripper(obj)
             obj.finger.moveToDeg(150);
@@ -101,6 +105,14 @@ classdef Robot_4DOF
             obj.elbow.disableTorque();
             obj.wrist.disableTorque();
             obj.finger.disableTorque();
+        end
+
+        function obj = setMaxSpeed(obj, maxSpeed)
+            obj.base.setMaxSpeed(maxSpeed);
+            obj.shoulder.setMaxSpeed(maxSpeed);
+            obj.elbow.setMaxSpeed(maxSpeed);
+            obj.wrist.setMaxSpeed(maxSpeed);
+            obj.finger.setMaxSpeed(maxSpeed);
         end
 
         function angles = getAngles(obj)
@@ -125,7 +137,7 @@ classdef Robot_4DOF
 
 
         %% ---- ROUTINES ---- %%
-        function obj = initMovementRoutine(obj)
+        function obj = initMovementRoutine(obj, initpoint)
             obj.disableTorque();
 
             obj.base.enableTorque();
@@ -140,13 +152,59 @@ classdef Robot_4DOF
             obj.elbow.moveToDeg(-90)
             obj.wrist.moveToDeg(0)
             obj.waitUntilDone();
+
+            obj.move(initpoint, 0);
+            obj.waitUntilDone();
+
             obj.open_gripper();
             obj.waitUntilDone();
             obj.close_gripper();
             obj.waitUntilDone();
         end
 
+        function obj = rotateCubeNTimes(obj, n, cube_coord)
+            arguments
+                obj {Robot_4DOF};
+                n {mustBeInteger};
+                cube_coord {mustBeNumeric};
+            end
+            
+            coord_up = grid2cm([cube_coord, 6])';
+            coord_down = grid2cm([cube_coord, 3])';
+            obj.move(coord_up, 90);
+            
+            obj.open_gripper();
+            obj.waitUntilDone();
+            
+            obj.move_cubic(coord_up, coord_down, 10, 90);
+            obj.waitUntilDone();
+            
+            for i = 1 : n
+            
+                obj.close_gripper();
+                obj.waitUntilDone();
+            
+                obj.move_cubic(coord_down, coord_up, 10, 90);
+                obj.waitUntilDone();
+            
+                obj.move(coord_up, 0);
+                obj.waitUntilDone();
+            
+                obj.move_cubic(coord_up, coord_down, 10, 0);
+                obj.waitUntilDone();
+            
+                obj.open_gripper();
+                obj.waitUntilDone();
+            
+                obj.move(coord_down, 90);
+                obj.waitUntilDone();
+            end
+            
+            
+        end
+        
         %% ---- TASKS ---- %%
+        %% looking back i dont think the tasks should just be like this lol sorry
         function obj = Task1a(obj, grid_start1, grid_end1, ...
                                 grid_start2, grid_end2, ...
                                 grid_start3, grid_end3)
@@ -176,25 +234,25 @@ classdef Robot_4DOF
 
             for i = 1 : 3
                 % i'm aware this + 3*(i-1) looks cursed, i'm sorry
-                robot.move(coords(1 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
-                robot.open_gripper();
-                robot.waitUntilDone();
-                robot.move(coords(2 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
-                robot.close_gripper();
-                robot.waitUntilDone();
-                robot.move(coords(1 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
+                obj.move(coords(1 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
+                obj.open_gripper();
+                obj.waitUntilDone();
+                obj.move(coords(2 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
+                obj.close_gripper();
+                obj.waitUntilDone();
+                obj.move(coords(1 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
                 
-                robot.move(coords(3 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
-                robot.move(coords(4 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
-                robot.open_gripper();
-                robot.waitUntilDone();
-                robot.move(coords(3 + 3*(i-1), :)', 90);
-                robot.waitUntilDone();
+                obj.move(coords(3 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
+                obj.move(coords(4 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
+                obj.open_gripper();
+                obj.waitUntilDone();
+                obj.move(coords(3 + 3*(i-1), :)', 90);
+                obj.waitUntilDone();
             end
 
             fprintf("Task1A Done!\n");
