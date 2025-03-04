@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -67,9 +67,9 @@ robot.initMovementRoutine([15; 0; 20]);
 
 robot.setMaxSpeed(20);
 
-gate_cube_coord = grid2cm([gate_cube_coord, 3]);
+gate_cube_coord = grid2cm([gate_cube_coord, 3])';
 
-outside_gate_coord = [gate_cube_coord(1) - 3, gate_cube_coord(2)];
+outside_gate_coord = [gate_cube_coord(1) - 3, gate_cube_coord(2), 3]';
 
 robot.move(outside_gate_coord, 0);
 robot.waitUntilDone();
