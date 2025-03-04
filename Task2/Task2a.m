@@ -55,7 +55,7 @@ Z_lim = 2.5;
 
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
-robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open, Gripper_Close);
+robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open,150, Gripper_Close);
 
 
 %% ---- Process Points to Visit ---- %%
@@ -105,13 +105,14 @@ elbow.setMaxSpeed(30)
 wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
-
+robot.setMaxSpeed(60);
 base.enableTorque();
 shoulder.enableTorque();
 elbow.enableTorque();
 wrist.enableTorque();
 finger.enableTorque();
 pause(1)
+
 
 %% ---- MOVE USING CUBIC ---- %%
 angle_in = 90;
@@ -125,29 +126,29 @@ for i = 0 : 2
     robot.move([15; 0 ;20],angle_in);
     robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 20, angle_in);
+    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(2, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 20, angle_in);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.close_gripper();
     robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 20, angle_in);
+    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 10, angle_in);
     robot.waitUntilDone();
     
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 20, angle_in);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 10, angle_in);
     robot.waitUntilDone();
     % robot.move(coords(4, :)', 90);
-    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 20, angle_in);
+    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 20, angle_in);
+    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 10, angle_in);
     robot.waitUntilDone();
 end
 
