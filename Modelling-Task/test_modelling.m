@@ -18,7 +18,7 @@ end
 angles = [];
 for i = 1 : length(points)
     T = makehgtform('translate', points(:, i));
-    angles = [angles; IK_H(T)];
+    angles = [angles; IK(T)];
 end
 
 figure;

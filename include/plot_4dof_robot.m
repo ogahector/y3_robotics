@@ -80,6 +80,9 @@ function plot_4dof_robot(theta1, theta2, theta3, theta4)
     xlabel('X');
     ylabel('Y');
     zlabel('Z');
+    xlim([-40 40])
+    ylim([-40 40])
+    zlim([0 40])
     title('4DOF Robot with Coordinate Axes');
     view(3);
     hold off;
