@@ -16,7 +16,7 @@ end
 
 % Load Libraries
 if ~libisloaded(lib_name)
-    [notfound, warnings] = loadlibrary(lib_name, 'dynamixel_sdk.h', 'addheader', 'group_sync_write.h', 'addheader', 'port_handler.h', 'addheader', 'packet_handler.h');
+    [notfound, warnings] = loadlibrary(lib_name, 'dynamixel_sdk.h', 'addheader', 'group_sync_write.h', 'addheader', 'group_sync_read.h', 'addheader', 'port_handler.h', 'addheader', 'packet_handler.h');
 else
     notfound = 0;
     warnings = 0;
