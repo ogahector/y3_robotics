@@ -1,4 +1,4 @@
-function angles = IK_H(frame, config)
+function angles = IK(frame, config)
 arguments
     frame double = eye(4)
     config string = ""

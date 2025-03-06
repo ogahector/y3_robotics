@@ -100,7 +100,10 @@ classdef Robot_4DOF
         end
 
         function obj = move_sync(obj, point, yDeg)
-            rot = makehgtform('yrotate', deg2rad(yDeg));
+            theta1 = atan2(point(2), point(1));
+            rot_z = makehgtform('zrotate',theta1);
+            rot_y = makehgtform('yrotate', deg2rad(yDeg));
+            rot = rot_z * rot_y;
             T = [rot(1:3, 1:3), point ; 0 0 0 1];
 
             angles = IK(T);

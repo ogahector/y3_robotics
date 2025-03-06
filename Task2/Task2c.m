@@ -96,19 +96,14 @@ robot.enableTorque();
 robot.initMovementRoutine([15; 0; 15]);
 
 %% --- GRAB HAMMER --- %%
-hammer_grab_angle = 0; %Angle at which the robot will grab the hammer
+hammer_grab_angle = 65; %Angle at which the robot will grab the hammer
 n_points = 50;
 
 
 hammer_coord = [grid2cm(hammer_coord), z_lim + hammer_offset]';
 
-robot.move_sync([grid2cm([5 , -5]) , 13]',30);
-robot.waitUntilDone();
-robot.move_sync([grid2cm([0 , -5]) , 13]',30);
-robot.waitUntilDone();
-robot.move_sync([grid2cm([-1 , -5]) , 13]',30);
-robot.waitUntilDone();
-robot.move_sync([grid2cm([-2 , -5]) , 13]',30);
+
+robot.move_sync([-3.4039, -11.4904, 15.702]',45);
 robot.waitUntilDone();
 
 
@@ -134,10 +129,6 @@ robot.waitUntilDone();
 
 robot.setMaxSpeed(80);
 
-pause(5);
-robot.disableTorque();
-closePort(port_num);
-fprintf('Port Closed \n');
 
 %% --- MOVE THROUGH GATES --- %%
 

@@ -35,6 +35,8 @@ function plot_4dof_robot(theta1, theta2, theta3, theta4)
         positions(:, i) = T{i}(1:3, 4);
     end
 
+    disp(T{5});
+
     % Plot links
     % figure;
     gcf;
