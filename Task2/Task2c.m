@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -48,24 +48,24 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 100;
-Gripper_Slight = 140;
+Gripper_Open = 85;
+Gripper_Slight = 130;
 Gripper_Close = 200;
 
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger,Gripper_Open,Gripper_Slight,Gripper_Close);
 
 %% --- GATE COORDS --- %%
-hammer_coord = [-1 , -8];%Check these
+hammer_coord = [-2 , -8];%Check these
 
 coords = [
-    -1, -7;
-    5, -7;
-    5, -3.5;
-    10, -3.5;
-    10, 0;
-    8, 0;
-    8, 4;
-    2, 4
+    -2, -7;
+    4, -7;
+    4, -3.5;
+    9, -3.5;
+    9, 0;
+    7, 0;
+    7, 4;
+    1, 4
     ];
 
 % gate_1_before_coord = [5, -7];
@@ -85,38 +85,42 @@ coords = [
 
 %% --- CONFIGURE --- %%
 robot.disableTorque();
-robot.setMaxSpeed(30);
+robot.setMaxSpeed(40);
 robot.enableTorque();
 
 %% --- INIT ROUTINE ---- %%
-robot.initMovementRoutine([15; 0; 20]);
+robot.initMovementRoutine([15; 0; 15]);
 
 %% --- GRAB HAMMER --- %%
 z_lim = 2.5;
-gate_offset = 7;
+gate_offset = 10;
+hammer_offset = 14;
+n_points = 50;
 
-hammer_coord = [grid2cm(hammer_coord) , z_lim + 7]';
+hammer_coord = [grid2cm(hammer_coord), grid2cm(z_lim) + hammer_offset]';
 
-robot.move(hammer_coord,90);
+%robot.move_cubic_sync([15; 0; 15],[15; 0; z_lim + hammer_offset],n_points,90);
+robot.move_sync([15; 0; z_lim + hammer_offset],90)
+robot.waitUntilDone();
+robot.move_cubic_sync([15; 0; z_lim + hammer_offset],hammer_coord,n_points,90);
 robot.waitUntilDone();
 
 robot.open_gripper();
 
-robot.move((hammer_coord - [0 ; 0 ; 2]),90);
+robot.move_sync((hammer_coord - [0 ; 0 ; 7]),90);
 robot.waitUntilDone();
 
 robot.close_gripper();
 
-robot.move(hammer_coord,90);
+robot.move_sync(hammer_coord,90);
 robot.waitUntilDone();
 
 %% --- MOVE THROUGH GATES --- %%
-n_points = 50;
 
-robot.move([grid2cm(coords(1)) , z_lim + gate_offset]',90);
+robot.move_sync([grid2cm(coords(1,:)) , z_lim + gate_offset]',90);
 for i = 1:(size(coords,1)-1)
-    start_coord = [grid2cm(coords(i)) , z_lim + gate_offset]';
-    end_coord = [grid2cm(coords(i+1)) , z_lim + gate_offset]';
+    start_coord = [grid2cm(coords(i,:)) , z_lim + gate_offset]';
+    end_coord = [grid2cm(coords(i+1,:)) , z_lim + gate_offset]';
     robot.move_cubic(start_coord,end_coord,n_points,90);
     robot.waitUntilDone();
 end

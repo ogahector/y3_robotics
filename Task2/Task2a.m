@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -48,7 +48,7 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 100;
+Gripper_Open = 82;
 Gripper_Close = 200;
 
 Z_lim = 2.5;
@@ -81,9 +81,9 @@ coords = [
     grid2cm([grid_end2, 6]);
     grid2cm([grid_end2, Z_lim]);
 
-    grid2cm([grid_start3, 6]);
+    grid2cm([grid_start3, 9]);
     grid2cm([grid_start3, Z_lim]);
-    grid2cm([grid_end3, 6]);
+    grid2cm([grid_end3, 9]);
     grid2cm([grid_end3, Z_lim]);
 ];
 
@@ -105,7 +105,7 @@ elbow.setMaxSpeed(30)
 wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
-robot.setMaxSpeed(60);
+robot.setMaxSpeed(40);
 base.enableTorque();
 shoulder.enableTorque();
 elbow.enableTorque();
@@ -116,39 +116,41 @@ pause(1)
 
 %% ---- MOVE USING CUBIC ---- %%
 angle_in = 90;
+n_points = 30;
 % Init
 % robot.move([15; 0; 20], 90);
 robot.initMovementRoutine([15; 0; 20]);
 robot.waitUntilDone();
 
+
 for i = 0 : 2
     ind = 4*i;
-    robot.move([15; 0 ;20],angle_in);
+    robot.move_sync([15; 0 ;15],angle_in);
     robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 10, angle_in);
+    robot.move_cubic_sync([15; 0; 20], coords(ind + 1, :)', n_points, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(2, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 10, angle_in);
+    robot.move_cubic_sync(coords(ind+1, :)', coords(ind+2, :)', n_points, angle_in);
     robot.waitUntilDone();
     robot.close_gripper();
     robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 10, angle_in);
+    robot.move_cubic_sync(coords(ind+2, :)', coords(ind+1, :)', n_points, angle_in);
     robot.waitUntilDone();
     
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 10, angle_in);
+    robot.move_cubic_sync(coords(ind+1, :)', coords(ind+3, :)', n_points, angle_in);
     robot.waitUntilDone();
     % robot.move(coords(4, :)', 90);
-    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 10, angle_in);
+    robot.move_cubic_sync(coords(ind+3, :)', coords(ind+4, :)', n_points, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 10, angle_in);
+    robot.move_cubic_sync(coords(ind+4, :)', coords(ind+3, :)', n_points, angle_in);
     robot.waitUntilDone();
 end
 

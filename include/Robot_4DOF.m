@@ -10,6 +10,8 @@ classdef Robot_4DOF
         Gripper_Open double;
         Gripper_Slight double;
         Gripper_Close double;
+        groupwrite;
+        groupreadmov;
     end
     methods
         function obj = Robot_4DOF(base,shoulder,elbow,wrist,finger,open,slight,close)
@@ -34,6 +36,10 @@ classdef Robot_4DOF
             shoulder.setMaxSpeed(maxspeed);
             elbow.setMaxSpeed(maxspeed);
             wrist.setMaxSpeed(maxspeed);
+            finger.setMaxSpeed(maxspeed);
+
+            obj.groupwrite = groupSyncWrite(obj.base.port_num, base.PROTOCOL_VERSION, base.ADDR.GOAL_POSITION, 4);
+            obj.groupreadmov = groupSyncRead(obj.base.port_num, base.PROTOCOL_VERSION, base.ADDR.IS_MOVING, 1);
             fprintf("Initialised Robot")
         end
         
@@ -72,10 +78,54 @@ classdef Robot_4DOF
             end
         end
 
+        function obj = move_cubic_sync(obj,p1,p2,n, yDeg)
+            arguments
+                obj = [];
+                p1 = 0;
+                p2 = 0;
+                n = 20;
+                yDeg = 0;
+            end
+
+            points = cubic_interpol(p1,p2,n);
+            for i = 1:size(points,2)
+                obj.move_sync(points(:,i),yDeg);
+            end
+        end
+
         function obj = move(obj, point, yDeg) % point is a row vector
             rot = makehgtform('yrotate', deg2rad(yDeg));
             T = [rot(1:3, 1:3), point ; 0 0 0 1];
             move_to_point(obj.base, obj.shoulder, obj.elbow, obj.wrist, T);
+        end
+
+        function obj = move_sync(obj, point, yDeg)
+            rot = makehgtform('yrotate', deg2rad(yDeg));
+            T = [rot(1:3, 1:3), point ; 0 0 0 1];
+
+            angles = IK(T);
+            angles = rad2deg(angles);
+        
+            %Need to check if angles are within within movement range
+            % angles(1) = max(min(angles(1), 90), -90);
+            % angles(2) = max(min(angles(2), 105), 5);
+            % angles(3) = max(min(angles(3), 122), -85);
+            angles(4) = max(min(angles(4), 104), -120);
+        
+            angles(1) = dynDeg2pulse(obj.base.userAngle2Servo(angles(1)));
+            angles(2) = dynDeg2pulse(obj.shoulder.userAngle2Servo(angles(2)));
+            angles(3) = dynDeg2pulse(obj.elbow.userAngle2Servo(angles(3)));
+            angles(4) = dynDeg2pulse(obj.wrist.userAngle2Servo(angles(4)));
+
+            groupSyncWriteClearParam(obj.groupwrite)
+
+            groupSyncWriteAddParam(obj.groupwrite, obj.base.SERVO_ID, angles(1), 4);
+            groupSyncWriteAddParam(obj.groupwrite, obj.shoulder.SERVO_ID, angles(2), 4)
+            groupSyncWriteAddParam(obj.groupwrite, obj.elbow.SERVO_ID, angles(3), 4)
+            groupSyncWriteAddParam(obj.groupwrite, obj.wrist.SERVO_ID, angles(4), 4)
+        
+            groupSyncWriteTxPacket(obj.groupwrite);
+
         end
 
         function obj = applyRotation(obj, rot)
@@ -130,9 +180,19 @@ classdef Robot_4DOF
 
 
         function ismoving = isMoving(obj)
-            ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
-                   || isMoving(obj.elbow) || isMoving(obj.wrist) ...
-                   || isMoving(obj.finger);
+            % ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
+            %        || isMoving(obj.elbow) || isMoving(obj.wrist) ...
+            %        || isMoving(obj.finger);
+            groupSyncReadClearParam(obj.groupreadmov)
+
+            groupSyncReadAddParam(obj.base.port_num, obj.base.SERVO_ID);
+            groupSyncReadAddParam(obj.base.port_num, obj.shoulder.SERVO_ID)
+            groupSyncReadAddParam(obj.base.port_num, obj.elbow.SERVO_ID)
+            groupSyncReadAddParam(obj.base.port_num, obj.wrist.SERVO_ID)
+            
+            groupSyncReadTxRxPacket(obj.groupwrite);
+            % groupSyncReadRxPacket(obj.groupwrite);
+            ismoving = groupSyncReadGetData(obj.groupreadmov, obj.base.SERVO_ID, obj.base.ADDR.IS_MOVING, 1);
         end
 
         function obj = waitUntilDone(obj)
@@ -159,7 +219,7 @@ classdef Robot_4DOF
             obj.wrist.moveToDeg(0)
             obj.waitUntilDone();
 
-            obj.move(initpoint, 0);
+            obj.move_sync(initpoint, 0);
             obj.waitUntilDone();
 
             obj.open_gripper();
