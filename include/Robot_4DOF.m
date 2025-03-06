@@ -110,7 +110,7 @@ classdef Robot_4DOF
             % angles(1) = max(min(angles(1), 90), -90);
             % angles(2) = max(min(angles(2), 105), 5);
             % angles(3) = max(min(angles(3), 122), -85);
-            angles(4) = max(min(angles(4), 104), -120);
+             angles(4) = max(min(angles(4), 104), -120);
         
             angles(1) = dynDeg2pulse(obj.base.userAngle2Servo(angles(1)));
             angles(2) = dynDeg2pulse(obj.shoulder.userAngle2Servo(angles(2)));
@@ -215,10 +215,10 @@ classdef Robot_4DOF
             obj.finger.enableTorque();
             pause(1)
             
-            obj.base.moveToDeg(-90)
-            obj.shoulder.moveToDeg(90)
-            obj.elbow.moveToDeg(-90)
             obj.wrist.moveToDeg(0)
+            obj.elbow.moveToDeg(-90)
+            obj.shoulder.moveToDeg(90)
+            obj.base.moveToDeg(-90)
             obj.waitUntilDone();
 
             obj.move_sync(initpoint, 0);
