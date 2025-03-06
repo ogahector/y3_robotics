@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM15';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -106,11 +106,13 @@ robot.move_cubic_sync([15; 0; z_lim + hammer_offset],hammer_coord,n_points,90);
 robot.waitUntilDone();
 
 robot.open_gripper();
+robot.waitUntilDone();
 
 robot.move_sync((hammer_coord - [0 ; 0 ; 7]),90);
 robot.waitUntilDone();
 
 robot.close_gripper();
+robot.waitUntilDone();
 
 robot.move_sync(hammer_coord,90);
 robot.waitUntilDone();

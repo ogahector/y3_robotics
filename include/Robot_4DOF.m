@@ -117,7 +117,7 @@ classdef Robot_4DOF
             angles(3) = dynDeg2pulse(obj.elbow.userAngle2Servo(angles(3)));
             angles(4) = dynDeg2pulse(obj.wrist.userAngle2Servo(angles(4)));
 
-            groupSyncWriteClearParam(obj.groupwrite)
+            groupSyncWriteClearParam(obj.groupwrite);
 
             groupSyncWriteAddParam(obj.groupwrite, obj.base.SERVO_ID, angles(1), 4);
             groupSyncWriteAddParam(obj.groupwrite, obj.shoulder.SERVO_ID, angles(2), 4)
@@ -180,19 +180,21 @@ classdef Robot_4DOF
 
 
         function ismoving = isMoving(obj)
-            % ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
-            %        || isMoving(obj.elbow) || isMoving(obj.wrist) ...
-            %        || isMoving(obj.finger);
-            groupSyncReadClearParam(obj.groupreadmov)
+            ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
+                   || isMoving(obj.elbow) || isMoving(obj.wrist) ...
+                   || isMoving(obj.finger);
+            % groupSyncReadClearParam(obj.groupreadmov)
+            % 
+            % groupSyncReadAddParam(obj.base.port_num, obj.base.SERVO_ID);
+            % groupSyncReadAddParam(obj.base.port_num, obj.shoulder.SERVO_ID)
+            % groupSyncReadAddParam(obj.base.port_num, obj.elbow.SERVO_ID)
+            % groupSyncReadAddParam(obj.base.port_num, obj.wrist.SERVO_ID)
+            % 
+            % groupSyncReadTxRxPacket(obj.groupreadmov);
+            % groupSyncReadRxPacket(obj.groupreadmov);
+            % ismoving = groupSyncReadGetData(obj.groupreadmov, obj.base.SERVO_ID, obj.base.ADDR.IS_MOVING, 1)
 
-            groupSyncReadAddParam(obj.base.port_num, obj.base.SERVO_ID);
-            groupSyncReadAddParam(obj.base.port_num, obj.shoulder.SERVO_ID)
-            groupSyncReadAddParam(obj.base.port_num, obj.elbow.SERVO_ID)
-            groupSyncReadAddParam(obj.base.port_num, obj.wrist.SERVO_ID)
-            
-            groupSyncReadTxRxPacket(obj.groupwrite);
-            % groupSyncReadRxPacket(obj.groupwrite);
-            ismoving = groupSyncReadGetData(obj.groupreadmov, obj.base.SERVO_ID, obj.base.ADDR.IS_MOVING, 1);
+            % ismoving = 
         end
 
         function obj = waitUntilDone(obj)
