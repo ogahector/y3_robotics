@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -48,7 +48,11 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
+Gripper_Open = 100;
+Gripper_Slight = 140;
+Gripper_Close = 200;
+
+robot = Robot_4DOF(base, shoulder, elbow, wrist, finger,Gripper_Open,Gripper_Slight,Gripper_Close);
 
 %% ---- USER INPUTS ---- %%
 
@@ -64,17 +68,17 @@ coords = [
 robot.initMovementRoutine([15; 0; 20]);
 
 %% ---- GRAB CUBE FROM GATES ---- %%
-
+Z_lim = 2.3;
 robot.setMaxSpeed(20);
 
-gate_cube_coord = grid2cm([gate_cube_coord, 3]);
+gate_cube_coord = [grid2cm(gate_cube_coord), Z_lim + 1.8]';
 
-outside_gate_coord = [gate_cube_coord(1) - 3, gate_cube_coord(2)];
-
-robot.move(outside_gate_coord, 0);
-robot.waitUntilDone();
+outside_gate_coord = [gate_cube_coord(1) - 3, gate_cube_coord(2), Z_lim + 1.8]';
 
 robot.open_gripper_slightly();
+robot.waitUntilDone();
+
+robot.move_cubic([15 ; 0 ; 20],outside_gate_coord,100, 0);
 robot.waitUntilDone();
 
 robot.move_cubic(outside_gate_coord, gate_cube_coord, 100, 0);
@@ -83,9 +87,13 @@ robot.waitUntilDone();
 robot.close_gripper();
 robot.waitUntilDone();
 
+robot.move((gate_cube_coord + [0 ; 0 ; 0.4]),0);
+robot.waitUntilDone();
+
 robot.move_cubic(gate_cube_coord, outside_gate_coord, 100, 0);
 robot.waitUntilDone();
 
+%%
 % Robot now has the cube that was below the gates. 
 % It will be the first cube placed on the stack
 

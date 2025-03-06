@@ -7,14 +7,20 @@ classdef Robot_4DOF
         elbow ServoDynamixel;
         wrist ServoDynamixel;
         finger ServoDynamixel;
+        Gripper_Open double;
+        Gripper_Slight double;
+        Gripper_Close double;
     end
     methods
-        function obj = Robot_4DOF(base,shoulder,elbow,wrist,finger)
+        function obj = Robot_4DOF(base,shoulder,elbow,wrist,finger,open,slight,close)
             obj.base = base;
             obj.shoulder = shoulder;
             obj.elbow = elbow;
             obj.wrist = wrist;
             obj.finger = finger;%Might wanna ensure mode here
+            obj.Gripper_Open = open;
+            obj.Gripper_Close = close;
+            obj.Gripper_Slight = slight;
 
             mov_threshold = 1;
             base.setMovingThreshold(mov_threshold);
@@ -23,7 +29,7 @@ classdef Robot_4DOF
             wrist.setMovingThreshold(mov_threshold);
             finger.setMovingThreshold(mov_threshold);
 
-            maxspeed = 30;
+            maxspeed = 40;
             base.setMaxSpeed(maxspeed);
             shoulder.setMaxSpeed(maxspeed);
             elbow.setMaxSpeed(maxspeed);
@@ -80,15 +86,15 @@ classdef Robot_4DOF
         %Assuming here grippper is in current based position mode (Check
         %this)
         function obj = open_gripper(obj)
-            obj.finger.moveToDeg(250);% This was set arbitrarily, since we haven't checked this servo yet
+            obj.finger.moveToDeg(obj.Gripper_Open);% This was set arbitrarily, since we haven't checked this servo yet
         end
 
         function obj = open_gripper_slightly(obj)
-            obj.finger.moveToDeg(200);
+            obj.finger.moveToDeg(obj.Gripper_Slight);
         end
             
         function obj = close_gripper(obj)
-            obj.finger.moveToDeg(150);
+            obj.finger.moveToDeg(obj.Gripper_Close);
         end
 
         function obj = enableTorque(obj)

@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM12';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -48,50 +48,43 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
+Gripper_Open = 100;
+Gripper_Close = 200;
+
+Z_lim = 2.5;
+
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
-robot = Robot_4DOF(base, shoulder, elbow, wrist, finger);
+robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open,150, Gripper_Close);
 
 
 %% ---- Process Points to Visit ---- %%
-% cube_coords = 5 * [...
-%                 0    0    0;
-%                 1  0    0;
-%                 1  1  0;
-%                 0    1  0;
-%                 0    0    0;
-% 
-%                 0    0    1;
-%                 1  0    1;
-%                 1  1  1;
-%                 0    1  1;
-%               ];
-% cube_coords = cube_coords + 10;
+
 
 grid_start1 = [9, 0];
 grid_end1 = [5, 5];
 
-grid_start2 = [6, 7];
-grid_end2 = [4, 2];
+grid_start2 = [3, -8];
+grid_end2 = [4, 0];
 
-grid_start3 = [5, 5];
-grid_end3 = [9, 0];
+grid_start3 = [6, -6];
+grid_end3 = [0, 6];
 
 coords = [
     grid2cm([grid_start1, 6]);
-    grid2cm([grid_start1, 3]);
+    grid2cm([grid_start1, Z_lim]);
     grid2cm([grid_end1, 6]);
-    grid2cm([grid_end1, 3]);
+    grid2cm([grid_end1, Z_lim]);
     
     grid2cm([grid_start2, 6]);
-    grid2cm([grid_start2, 3]);
+    grid2cm([grid_start2, Z_lim]);
     grid2cm([grid_end2, 6]);
-    grid2cm([grid_end2, 3]);
+    grid2cm([grid_end2, Z_lim]);
 
     grid2cm([grid_start3, 6]);
-    grid2cm([grid_start3, 3]);
+    grid2cm([grid_start3, Z_lim]);
     grid2cm([grid_end3, 6]);
-    grid2cm([grid_end3, 3]);
+    grid2cm([grid_end3, Z_lim]);
 ];
 
 
@@ -112,7 +105,7 @@ elbow.setMaxSpeed(30)
 wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
-
+robot.setMaxSpeed(60);
 base.enableTorque();
 shoulder.enableTorque();
 elbow.enableTorque();
@@ -120,8 +113,9 @@ wrist.enableTorque();
 finger.enableTorque();
 pause(1)
 
-%% ---- MOVE USING CUBIC ---- %%
 
+%% ---- MOVE USING CUBIC ---- %%
+angle_in = 90;
 % Init
 % robot.move([15; 0; 20], 90);
 robot.initMovementRoutine([15; 0; 20]);
@@ -129,35 +123,37 @@ robot.waitUntilDone();
 
 for i = 0 : 2
     ind = 4*i;
+    robot.move([15; 0 ;20],angle_in);
+    robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 20, 90);
+    robot.move_cubic([15; 0; 20], coords(ind + 1, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(2, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 20, 90);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+2, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.close_gripper();
     robot.waitUntilDone();
     % robot.move(coords(1, :)', 90);
-    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 20, 90);
+    robot.move_cubic(coords(ind+2, :)', coords(ind+1, :)', 10, angle_in);
     robot.waitUntilDone();
     
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 20, 90);
+    robot.move_cubic(coords(ind+1, :)', coords(ind+3, :)', 10, angle_in);
     robot.waitUntilDone();
     % robot.move(coords(4, :)', 90);
-    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 20, 90);
+    robot.move_cubic(coords(ind+3, :)', coords(ind+4, :)', 10, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
     % robot.move(coords(3, :)', 90);
-    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 20, 90);
+    robot.move_cubic(coords(ind+4, :)', coords(ind+3, :)', 10, angle_in);
     robot.waitUntilDone();
 end
 
 
-pause(5)
+pause(10)
 
 %% ---- End ---- %%
 robot.disableTorque();
