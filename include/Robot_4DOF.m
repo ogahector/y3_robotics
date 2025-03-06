@@ -40,7 +40,7 @@ classdef Robot_4DOF
 
             obj.groupwrite = groupSyncWrite(obj.base.port_num, base.PROTOCOL_VERSION, base.ADDR.GOAL_POSITION, 4);
             obj.groupreadmov = groupSyncRead(obj.base.port_num, base.PROTOCOL_VERSION, base.ADDR.IS_MOVING, 1);
-            fprintf("Initialised Robot")
+            fprintf("Initialised Robot!\n\n")
         end
         
         function obj = move_linear(obj,p1,p2,n, yDeg)
@@ -56,7 +56,7 @@ classdef Robot_4DOF
             rot = makehgtform('yrotate', deg2rad(yDeg));
             for i = 1:size(points,2)
                 T = [rot(1:3,1:3) points(:,i) ; 0 0 0 1];
-                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T)
+                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T);
             end
         end
 
@@ -74,7 +74,7 @@ classdef Robot_4DOF
             for i = 1:size(points,2)
                 T = [rot(1:3,1:3) points(:,i) ; 0 0 0 1];
                 T(1:3, 4) = points(:, i);
-                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T)
+                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T);
             end
         end
 
@@ -123,9 +123,9 @@ classdef Robot_4DOF
             groupSyncWriteClearParam(obj.groupwrite);
 
             groupSyncWriteAddParam(obj.groupwrite, obj.base.SERVO_ID, angles(1), 4);
-            groupSyncWriteAddParam(obj.groupwrite, obj.shoulder.SERVO_ID, angles(2), 4)
-            groupSyncWriteAddParam(obj.groupwrite, obj.elbow.SERVO_ID, angles(3), 4)
-            groupSyncWriteAddParam(obj.groupwrite, obj.wrist.SERVO_ID, angles(4), 4)
+            groupSyncWriteAddParam(obj.groupwrite, obj.shoulder.SERVO_ID, angles(2), 4);
+            groupSyncWriteAddParam(obj.groupwrite, obj.elbow.SERVO_ID, angles(3), 4);
+            groupSyncWriteAddParam(obj.groupwrite, obj.wrist.SERVO_ID, angles(4), 4);
         
             groupSyncWriteTxPacket(obj.groupwrite);
 
@@ -218,10 +218,10 @@ classdef Robot_4DOF
             obj.finger.enableTorque();
             pause(1)
             
-            obj.wrist.moveToDeg(0)
-            obj.elbow.moveToDeg(-90)
-            obj.shoulder.moveToDeg(90)
-            obj.base.moveToDeg(-90)
+            obj.wrist.moveToDeg(0);
+            obj.elbow.moveToDeg(-90);
+            obj.shoulder.moveToDeg(90);
+            obj.base.moveToDeg(-90);
             obj.waitUntilDone();
 
             obj.move_sync(initpoint, 0);
@@ -233,41 +233,46 @@ classdef Robot_4DOF
             obj.waitUntilDone();
         end
 
-        function obj = rotateCubeNTimes(obj, n, cube_coord)
+        function obj = rotateCubeNTimes(obj, n, cube_coord, z_limCM)
             arguments
-                obj {Robot_4DOF};
+                obj;
                 n {mustBeInteger};
                 cube_coord {mustBeNumeric};
+                z_limCM double;
             end
             
-            coord_up = grid2cm([cube_coord, 6])';
-            coord_down = grid2cm([cube_coord, 3])';
-            obj.move(coord_up, 90);
+            coord_up = grid2cm([cube_coord, 4*z_limCM])';
+            coord_down = grid2cm([cube_coord, z_limCM + 1.5])';
+
+            obj.move_sync(coord_up, 0);
+            obj.waitUntilDone();
             
             obj.open_gripper();
             obj.waitUntilDone();
             
-            obj.move_cubic(coord_up, coord_down, 10, 90);
+            obj.move_cubic_sync(coord_up, coord_down, 10, 0);
             obj.waitUntilDone();
             
             for i = 1 : n
+                theta1 = atan2(cube_coord(2), cube_coord(1));
+                horizontal_gripper_correction = 2 * [cos(theta1); sin(theta1); 0];
             
                 obj.close_gripper();
                 obj.waitUntilDone();
             
-                obj.move_cubic(coord_down, coord_up, 10, 90);
+                obj.move_cubic_sync(coord_down, coord_up, 10, 0);
                 obj.waitUntilDone();
             
                 obj.move(coord_up, 0);
                 obj.waitUntilDone();
             
-                obj.move_cubic(coord_up, coord_down, 10, 0);
+                obj.move_cubic_sync(coord_up, coord_down, 10, 90);
                 obj.waitUntilDone();
             
                 obj.open_gripper();
                 obj.waitUntilDone();
             
-                obj.move(coord_down, 90);
+                obj.move_sync(coord_down, 0);
                 obj.waitUntilDone();
             end
             

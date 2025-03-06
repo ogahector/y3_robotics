@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM15';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -51,7 +51,7 @@ finger.setMovingThreshold(mov_threshold);
 Gripper_Open = 82;
 Gripper_Close = 200;
 
-Z_lim = 2.5;
+Z_lim = 2.6;
 
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
@@ -94,29 +94,22 @@ coords = [
 
 %% ---- Configure ---- %%
 % Disable torque <=> enable configuration
-base.disableTorque()
-shoulder.disableTorque()
-elbow.disableTorque()
-wrist.disableTorque()
+robot.disableTorque();
 
-base.setMaxSpeed(30)
-shoulder.setMaxSpeed(30)
-elbow.setMaxSpeed(30)
-wrist.setMaxSpeed(30)
+% base.setMaxSpeed(30)
+% shoulder.setMaxSpeed(30)
+% elbow.setMaxSpeed(30)
+% wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
-robot.setMaxSpeed(40);
-base.enableTorque();
-shoulder.enableTorque();
-elbow.enableTorque();
-wrist.enableTorque();
-finger.enableTorque();
+robot.setMaxSpeed(200);
+robot.enableTorque();
 pause(1)
 
 
 %% ---- MOVE USING CUBIC ---- %%
 angle_in = 90;
-n_points = 30;
+n_points = 40;
 % Init
 % robot.move([15; 0; 20], 90);
 robot.initMovementRoutine([15; 0; 20]);
