@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                     = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM15';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -67,16 +67,17 @@ coords = [
 rotation_coord = [5,5];
 
 %% --- INIT ROUTINE ---- %%
-Z_lim = 2.15;
+Z_lim = 2.7;
 %robot.initMovementRoutine([15; 0; 20]);
 robot.enableTorque();
 
 %% ---- GRAB CUBE FROM GATES ---- %%
 
-robot.setMaxSpeed(50);
+
 intermediary_pointCM = grid2cm([5.5, 0, 3.5])';
 grab_n_points = 250;
 
+robot.setMaxSpeed(50);
 gate_cube_coord = [grid2cm(gate_cube_coord), grid2cm(Z_lim - 0.25)]';
 
 outside_gate_coord = [gate_cube_coord(1) - 4, gate_cube_coord(2), grid2cm(Z_lim)]';
@@ -84,10 +85,10 @@ outside_gate_coord = [gate_cube_coord(1) - 4, gate_cube_coord(2), grid2cm(Z_lim)
 robot.open_gripper_slightly();
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time([15 ; 0 ; 20], outside_gate_coord,grab_n_points, 0);
+robot.move_cubic_sync([15 ; 0 ; 20], outside_gate_coord,grab_n_points, 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(outside_gate_coord, gate_cube_coord - [0.5;0;0], grab_n_points, 0);
+robot.move_cubic_sync(outside_gate_coord, gate_cube_coord - [0.5;0;0], grab_n_points, 0);
 robot.waitUntilDone();
 
 robot.close_gripper();
@@ -96,10 +97,10 @@ robot.waitUntilDone();
 robot.move_sync(gate_cube_coord + [0;0;0.3], 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(gate_cube_coord + [0;0;0.3], outside_gate_coord, grab_n_points, 0);
+robot.move_cubic_sync(gate_cube_coord + [0;0;0.3], outside_gate_coord, grab_n_points, 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(outside_gate_coord, intermediary_pointCM, grab_n_points/2, 0);
+robot.move_cubic_sync(outside_gate_coord, intermediary_pointCM, grab_n_points/2, 0);
 robot.waitUntilDone();
 
 %%
@@ -109,7 +110,10 @@ robot.waitUntilDone();
 stack_coord_up = grid2cm([stack_grid_coord, 10])'; % will have to change dynamically
 stack_coord_down = grid2cm([stack_grid_coord, 3])'; % will also have to change dynamically
 
-robot.move_cubic_sync_time(intermediary_pointCM, stack_coord_up, 90);
+robot.move_cubic_sync_time(intermediary_pointCM,intermediary_pointCM+grid2cm([0;0;4]),100,0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(intermediary_pointCM, stack_coord_up,100, 90);
 robot.waitUntilDone();
 
 robot.move_cubic_sync_time(stack_coord_up, stack_coord_down, 100, 90);
@@ -131,11 +135,15 @@ coord_down2 = grid2cm([coords(1, :), 3])';
 
 
 robot.setMaxSpeed(100);
+robot.wrist.setMaxSpeed(200);
 
 robot.move_cubic_sync_time(stack_coord_up, coord_up1, 30, 90);
 robot.waitUntilDone();
 
-robot.rotateCubeNTimes(2, rotation_coord, Z_lim);
+offset_h = -0.4;
+offset_v = 0.75;
+
+robot.rotateCubeNTimes(2, rotation_coord, Z_lim, offset_h, offset_v);
 robot.waitUntilDone();
 
 robot.open_gripper();
@@ -198,6 +206,5 @@ pause(5)
 
 %% ---- End ---- %%
 robot.disableTorque();
-
 closePort(port_num);
 fprintf('Port Closed \n');

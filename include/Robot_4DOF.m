@@ -57,6 +57,7 @@ classdef Robot_4DOF
             points = cubic_interpol(p1,p2,n);
             for i = 1:size(points,2)
                 obj.move_sync(points(:,i),yDeg);
+                pause(0.01);%Potentially comment out for 2c
             end
         end
          
@@ -87,12 +88,28 @@ classdef Robot_4DOF
                 T1 = [rot1(1:3,1:3), p1; 0 0 0 1];
                 angles1 = IK(T1);
                 angles1 = rad2deg(angles1);
+            elseif nargin == 5
+                p1 = varargin{1};
+                p2 = varargin{2};
+                n = varargin{3};
+                yDeg1 = varargin{4};
+                yDeg2 = yDeg1;
 
+                %Caclulates angles for point 1
+                theta11 = atan2(p1(2), p1(1));
+                zrot1 = makehgtform('zrotate', theta11);
+                yrot1 = makehgtform('yrotate', deg2rad(yDeg1));
+                rot1 = zrot1 * yrot1;
+                T1 = [rot1(1:3,1:3), p1; 0 0 0 1];
+                angles1 = IK(T1);
+                angles1 = rad2deg(angles1);
             elseif nargin == 4 %1 point given
                 p2 = varargin{1};
                 n = varargin{2};
                 yDeg2 = varargin{3};
                 angles1 = obj.getAngles(); %Point 1 angles are current angles
+            else
+                error("Wrong size of input")
             end
 
             
@@ -140,7 +157,7 @@ classdef Robot_4DOF
                 groupSyncWriteAddParam(obj.groupwrite, obj.wrist.SERVO_ID, theta4(i), 4);
 
                 groupSyncWriteTxPacket(obj.groupwrite);
-
+                pause(0.01);
             end
 
         end
@@ -232,7 +249,7 @@ classdef Robot_4DOF
 
         function obj = waitUntilDone(obj)
             while obj.isMoving()
-                pause(0.1)
+                pause(0.01)
             end
         end
 
@@ -263,34 +280,44 @@ classdef Robot_4DOF
             obj.waitUntilDone();
         end
 
-        function obj = rotateCubeNTimes(obj, n, cube_coord, z_lim_verG, offset)
+        function obj = rotateCubeNTimes(obj, n, cube_coord, z_lim_verG,horizontal_offset, vertical_offset)
             arguments
                 obj;
                 n {mustBeInteger};
                 cube_coord {mustBeNumeric};
                 z_lim_verG double;
-                offset double;
+                horizontal_offset double;
+                vertical_offset double;
             end
             
-            n_points = 50;
+            n_points = 100;
+            theta = atand(cube_coord(2)/cube_coord(1));
+            vertical_x_offset = vertical_offset * cosd(theta);
+            vertical_y_offset = vertical_offset * sind(theta);
+            cube_coord_v = cube_coord + [vertical_x_offset , vertical_y_offset];
             coord_up = grid2cm([cube_coord, 4*z_lim_verG])';
-            coord_down_vertical = grid2cm([cube_coord, z_lim_verG])';
-            coord_down_horizontal = grid2cm([cube_coord, z_lim_verG+offset])';
+            coord_down_vertical = grid2cm([cube_coord_v, z_lim_verG])';
+            coord_down_horizontal = grid2cm([cube_coord, z_lim_verG+horizontal_offset])';
 
+            
 
-            obj.move_sync(coord_up, 0);
-            obj.waitUntilDone();
-            
-            obj.open_gripper();
-            obj.waitUntilDone();
-            
-            obj.move_cubic_sync_time(coord_up, coord_down_horizontal, n_points, 0);
-            obj.waitUntilDone();
+            % 
+            % obj.move_sync(coord_up, 0);
+            % obj.waitUntilDone();
+            % 
+            % obj.open_gripper();
+            % obj.waitUntilDone();
+            % 
+            % obj.move_cubic_sync_time(coord_up, coord_down_horizontal, n_points, 0);
+            % obj.waitUntilDone();
             
             for i = 1 : n
-                obj.move_sync(coord_up, 0);
+                obj.move_cubic_sync_time(coord_up,n_points, 90);
                 obj.waitUntilDone();
                 
+                obj.move_cubic_sync_time(coord_up,n_points, 0);
+                obj.waitUntilDone();
+
                 obj.open_gripper();
                 obj.waitUntilDone();
                 
@@ -300,7 +327,7 @@ classdef Robot_4DOF
                 obj.close_gripper();
                 obj.waitUntilDone();
             
-                obj.move_cubic_sync_time(coord_down_horizontal, coord_up, n_points, 0);
+                obj.move_cubic_sync(coord_down_horizontal, coord_up, n_points, 0);
                 obj.waitUntilDone();
             
                 obj.move_sync(coord_up, 90);
@@ -311,6 +338,7 @@ classdef Robot_4DOF
             
                 obj.open_gripper();
                 obj.waitUntilDone();
+                pause(2)
             end
             
             

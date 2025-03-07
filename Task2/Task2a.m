@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM15';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -103,14 +103,14 @@ robot.disableTorque();
 % wrist.setMaxSpeed(30)
 
 %% ---- Move ---- %%
-robot.setMaxSpeed(150);
+robot.setMaxSpeed(120);
 robot.enableTorque();
 pause(1)
 
 
 %% ---- MOVE USING CUBIC ---- %%
 angle_in = 90;
-n_points = 20;
+n_points = 50;
 % Init
 % robot.move([15; 0; 20], 90);
 robot.initMovementRoutine([15; 0; 20]);

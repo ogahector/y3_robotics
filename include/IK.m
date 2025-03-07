@@ -62,6 +62,7 @@ end
 %% ---- Theta4 infer from gamma ---- %%
     theta4_up = gamma - theta2 - theta3_up;
     theta4_down = gamma - theta2 - theta3_down;
+    theta1 = theta1 + deg2rad(-2);
 
     if isempty(config)
         angles = [theta1, theta2, theta3_up, theta3_up];
