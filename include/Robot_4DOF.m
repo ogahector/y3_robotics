@@ -43,40 +43,7 @@ classdef Robot_4DOF
             fprintf("Initialised Robot!\n\n")
         end
         
-        function obj = move_linear(obj,p1,p2,n, yDeg)
-            arguments
-                obj = [];
-                p1 = 0;
-                p2 = 0;
-                n = 20;
-                yDeg = 0;
-            end
 
-            points = linear_interpol(p1,p2,n);
-            rot = makehgtform('yrotate', deg2rad(yDeg));
-            for i = 1:size(points,2)
-                T = [rot(1:3,1:3) points(:,i) ; 0 0 0 1];
-                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T);
-            end
-        end
-
-        function obj = move_cubic(obj,p1,p2,n, yDeg)
-            arguments
-                obj = [];
-                p1 = 0;
-                p2 = 0;
-                n = 20;
-                yDeg = 0;
-            end
-
-            points = cubic_interpol(p1,p2,n);
-            rot = makehgtform('yrotate', deg2rad(yDeg));
-            for i = 1:size(points,2)
-                T = [rot(1:3,1:3) points(:,i) ; 0 0 0 1];
-                T(1:3, 4) = points(:, i);
-                move_to_point(obj.base,obj.shoulder,obj.elbow,obj.wrist,T);
-            end
-        end
 
         function obj = move_cubic_sync(obj,p1,p2,n, yDeg)
             arguments
@@ -92,22 +59,43 @@ classdef Robot_4DOF
                 obj.move_sync(points(:,i),yDeg);
             end
         end
+         
+        function obj = move_cubic_sync_time(obj, varargin)
+        % function obj = move_cubic_sync_time(obj, p1, p2, n, yDeg1, yDeg2)
+            % arguments
+            %     obj = [];
+            %     p1 = [0;0;0];
+            %     p2 = [0;0;0];
+            %     n = 20;
+            %     yDeg1 = 0;
+            %     yDeg2 = yDeg1;
+            % end
 
-        function obj = move_cubic_sync_time(obj, p1, p2, n, yDeg1, yDeg2)
-            arguments
-                obj = [];
-                p1 = [0;0;0];
-                p2 = [0;0;0];
-                n = 20;
-                yDeg1 = 0;
-                yDeg2 = 0;
+            %2 points given
+            if nargin == 6 
+                p1 = varargin{1};
+                p2 = varargin{2};
+                n = varargin{3};
+                yDeg1 = varargin{4};
+                yDeg2 = varargin{5};
+
+                %Caclulates angles for point 1
+                theta11 = atan2(p1(2), p1(1));
+                zrot1 = makehgtform('zrotate', theta11);
+                yrot1 = makehgtform('yrotate', deg2rad(yDeg1));
+                rot1 = zrot1 * yrot1;
+                T1 = [rot1(1:3,1:3), p1; 0 0 0 1];
+                angles1 = IK(T1);
+                angles1 = rad2deg(angles1);
+
+            elseif nargin == 4 %1 point given
+                p2 = varargin{1};
+                n = varargin{2};
+                yDeg2 = varargin{3};
+                angles1 = obj.getAngles(); %Point 1 angles are current angles
             end
-            theta11 = atan2(p1(2), p1(1));
-            zrot1 = makehgtform('zrotate', theta11);
-            yrot1 = makehgtform('yrotate', deg2rad(yDeg1));
-            rot1 = zrot1 * yrot1;
-            T1 = [rot1(1:3,1:3), p1; 0 0 0 1];
-            angles1 = IK(T1);
+
+            
 
             theta12 = atan2(p2(2), p2(1));
             zrot2 = makehgtform('zrotate', theta12);
@@ -115,13 +103,14 @@ classdef Robot_4DOF
             rot2 = zrot2 * yrot2;
             T2 = [rot2(1:3,1:3), p2; 0 0 0 1];
             angles2 = IK(T2);
+            angles2 = rad2deg(angles2);
 
             t = linspace(0, 1, n);
 
-            angles1 = rad2deg(angles1)
-            angles2 = rad2deg(angles2)
+            
+            
 
-            delta_theta = angles2 - angles1
+            delta_theta = angles2 - angles1;
 
             theta1 = angles1(1) + delta_theta(1) * (3*t.^2 - 2*t.^3);
             theta2 = angles1(2) + delta_theta(2) * (3*t.^2 - 2*t.^3);
@@ -156,11 +145,6 @@ classdef Robot_4DOF
 
         end
 
-        function obj = move(obj, point, yDeg) % point is a row vector
-            rot = makehgtform('yrotate', deg2rad(yDeg));
-            T = [rot(1:3, 1:3), point ; 0 0 0 1];
-            move_to_point(obj.base, obj.shoulder, obj.elbow, obj.wrist, T);
-        end
 
         function obj = move_sync(obj, point, yDeg)
             theta1 = atan2(point(2), point(1));
@@ -194,15 +178,10 @@ classdef Robot_4DOF
 
         end
 
-        function obj = applyRotation(obj, rot)
-            T = [rot, [0;0;0];0 0 0 1];
-            move_to_point(obj.base, obj.shoulder, obj.elbow, obj.wrist, T);
-        end
         
-        %Assuming here grippper is in current based position mode (Check
-        %this)
+
         function obj = open_gripper(obj)
-            obj.finger.moveToDeg(obj.Gripper_Open);% This was set arbitrarily, since we haven't checked this servo yet
+            obj.finger.moveToDeg(obj.Gripper_Open);
         end
 
         function obj = open_gripper_slightly(obj)
@@ -249,18 +228,6 @@ classdef Robot_4DOF
             ismoving = isMoving(obj.base) || isMoving(obj.shoulder) ...
                    || isMoving(obj.elbow) || isMoving(obj.wrist) ...
                    || isMoving(obj.finger);
-            % groupSyncReadClearParam(obj.groupreadmov)
-            % 
-            % groupSyncReadAddParam(obj.base.port_num, obj.base.SERVO_ID);
-            % groupSyncReadAddParam(obj.base.port_num, obj.shoulder.SERVO_ID)
-            % groupSyncReadAddParam(obj.base.port_num, obj.elbow.SERVO_ID)
-            % groupSyncReadAddParam(obj.base.port_num, obj.wrist.SERVO_ID)
-            % 
-            % groupSyncReadTxRxPacket(obj.groupreadmov);
-            % groupSyncReadRxPacket(obj.groupreadmov);
-            % ismoving = groupSyncReadGetData(obj.groupreadmov, obj.base.SERVO_ID, obj.base.ADDR.IS_MOVING, 1)
-
-            % ismoving = 
         end
 
         function obj = waitUntilDone(obj)
@@ -296,16 +263,20 @@ classdef Robot_4DOF
             obj.waitUntilDone();
         end
 
-        function obj = rotateCubeNTimes(obj, n, cube_coord, z_limCM)
+        function obj = rotateCubeNTimes(obj, n, cube_coord, z_lim_verG, offset)
             arguments
                 obj;
                 n {mustBeInteger};
                 cube_coord {mustBeNumeric};
-                z_limCM double;
+                z_lim_verG double;
+                offset double;
             end
             
-            coord_up = grid2cm([cube_coord, 4*z_limCM])';
-            coord_down = grid2cm([cube_coord, z_limCM + 1.5])';
+            n_points = 50;
+            coord_up = grid2cm([cube_coord, 4*z_lim_verG])';
+            coord_down_vertical = grid2cm([cube_coord, z_lim_verG])';
+            coord_down_horizontal = grid2cm([cube_coord, z_lim_verG+offset])';
+
 
             obj.move_sync(coord_up, 0);
             obj.waitUntilDone();
@@ -313,89 +284,36 @@ classdef Robot_4DOF
             obj.open_gripper();
             obj.waitUntilDone();
             
-            obj.move_cubic_sync(coord_up, coord_down, 10, 0);
+            obj.move_cubic_sync_time(coord_up, coord_down_horizontal, n_points, 0);
             obj.waitUntilDone();
             
             for i = 1 : n
-                theta1 = atan2(cube_coord(2), cube_coord(1));
-                horizontal_gripper_correction = 2 * [cos(theta1); sin(theta1); 0];
-            
-                obj.close_gripper();
-                obj.waitUntilDone();
-            
-                obj.move_cubic_sync(coord_down, coord_up, 10, 0);
-                obj.waitUntilDone();
-            
-                obj.move(coord_up, 0);
-                obj.waitUntilDone();
-            
-                obj.move_cubic_sync(coord_up, coord_down, 10, 90);
-                obj.waitUntilDone();
-            
-                obj.open_gripper();
-                obj.waitUntilDone();
-            
-                obj.move_sync(coord_down, 0);
-                obj.waitUntilDone();
-            end
-            
-            
-        end
-        
-        %% ---- TASKS ---- %%
-        %% looking back i dont think the tasks should just be like this lol sorry
-        function obj = Task1a(obj, grid_start1, grid_end1, ...
-                                grid_start2, grid_end2, ...
-                                grid_start3, grid_end3)
-            coords = [
-                grid2cm([grid_start1, 6]);
-                grid2cm([grid_start1, 3]);
-
-                grid2cm([grid_end1, 6]);
-                grid2cm([grid_end1, 3]);
-
-                grid2cm([grid_start2, 6]);
-                grid2cm([grid_start2, 3]);
-
-                grid2cm([grid_end2, 6]);
-                grid2cm([grid_end2, 3]);
-
-                grid2cm([grid_start3, 6]);
-                grid2cm([grid_start3, 3]);
-
-                grid2cm([grid_end3, 6]);
-                grid2cm([grid_end3, 3]);
-            ];
-
-            obj.disableTorque();
-
-            obj.initMovementRoutine();
-
-            for i = 1 : 3
-                % i'm aware this + 3*(i-1) looks cursed, i'm sorry
-                obj.move(coords(1 + 3*(i-1), :)', 90);
-                obj.waitUntilDone();
-                obj.open_gripper();
-                obj.waitUntilDone();
-                obj.move(coords(2 + 3*(i-1), :)', 90);
-                obj.waitUntilDone();
-                obj.close_gripper();
-                obj.waitUntilDone();
-                obj.move(coords(1 + 3*(i-1), :)', 90);
+                obj.move_sync(coord_up, 0);
                 obj.waitUntilDone();
                 
-                obj.move(coords(3 + 3*(i-1), :)', 90);
-                obj.waitUntilDone();
-                obj.move(coords(4 + 3*(i-1), :)', 90);
-                obj.waitUntilDone();
                 obj.open_gripper();
                 obj.waitUntilDone();
-                obj.move(coords(3 + 3*(i-1), :)', 90);
+                
+                obj.move_cubic_sync_time(coord_up, coord_down_horizontal, n_points, 0);
+                obj.waitUntilDone();
+
+                obj.close_gripper();
+                obj.waitUntilDone();
+            
+                obj.move_cubic_sync_time(coord_down_horizontal, coord_up, n_points, 0);
+                obj.waitUntilDone();
+            
+                obj.move_sync(coord_up, 90);
+                obj.waitUntilDone();
+            
+                obj.move_cubic_sync_time(coord_up, coord_down_vertical, n_points, 90);
+                obj.waitUntilDone();
+            
+                obj.open_gripper();
                 obj.waitUntilDone();
             end
-
-            fprintf("Task1A Done!\n");
-            pause(5);
+            
+            
         end
     end
 end

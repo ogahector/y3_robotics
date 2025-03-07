@@ -119,7 +119,7 @@ classdef ServoDynamixel
 
         function current_pos = getCurrentPositionPulse(obj)
             current_pos = read4ByteTxRx(obj.port_num, obj.PROTOCOL_VERSION, ...
-                                obj.SERVO_ID, OBJ.ADDR.PRESENT_POSITION);
+                                obj.SERVO_ID, obj.ADDR.PRESENT_POSITION);
             verifyTxRxResult(obj.port_num, obj.PROTOCOL_VERSION);
         end
 

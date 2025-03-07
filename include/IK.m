@@ -5,15 +5,15 @@ arguments
 end
 %% ---- Check Transform Homogeneity ---- %%
 if frame(4, :) ~= [0 0 0 1]
-    error('The pose provided is a non-homogeneous transform!')
+    error('The pose provided is a non-homo transform!')
 end
 
 %% ---- Link Lengths & End Effector position ---- %%
     % Assignments
     L1 = 7.7;
     L2 = 13;
-    L3 = 12.6;
-    L4 = 12.4;
+    L3 = 12.4;
+    L4 = 12.6;
     x_e = frame(1,4);
     y_e = frame(2,4);
     z_e = frame(3,4);
@@ -64,7 +64,7 @@ end
     theta4_down = gamma - theta2 - theta3_down;
 
     if isempty(config)
-        angles = [theta1, theta2, theta3_down, theta4_down];
+        angles = [theta1, theta2, theta3_up, theta3_up];
         return
     end
 

@@ -2,8 +2,8 @@ function plot_4dof_robot(theta1, theta2, theta3, theta4)
     % Define DH parameters (modify according to your robot)
     L1 = 7.7;   % Base to Joint 2
     L2 = 13;    % Joint 2 to Joint 3
-    L3 = 12.6;  % Joint 3 to Joint 4
-    L4 = 12.4;  % Joint 4 to End-Effector
+    L3 = 12.4;  % Joint 3 to Joint 4
+    L4 = 12.6;  % Joint 4 to End-Effector
 
     % DH table: [a, alpha, d, theta]
     DH = [
