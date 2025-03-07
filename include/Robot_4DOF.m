@@ -93,6 +93,69 @@ classdef Robot_4DOF
             end
         end
 
+        function obj = move_cubic_sync_time(obj, p1, p2, n, yDeg1, yDeg2)
+            arguments
+                obj = [];
+                p1 = [0;0;0];
+                p2 = [0;0;0];
+                n = 20;
+                yDeg1 = 0;
+                yDeg2 = 0;
+            end
+            theta11 = atan2(p1(2), p1(1));
+            zrot1 = makehgtform('zrotate', theta11);
+            yrot1 = makehgtform('yrotate', deg2rad(yDeg1));
+            rot1 = zrot1 * yrot1;
+            T1 = [rot1(1:3,1:3), p1; 0 0 0 1];
+            angles1 = IK(T1);
+
+            theta12 = atan2(p2(2), p2(1));
+            zrot2 = makehgtform('zrotate', theta12);
+            yrot2 = makehgtform('yrotate', deg2rad(yDeg2));
+            rot2 = zrot2 * yrot2;
+            T2 = [rot2(1:3,1:3), p2; 0 0 0 1];
+            angles2 = IK(T2);
+
+            t = linspace(0, 1, n);
+
+            angles1 = rad2deg(angles1)
+            angles2 = rad2deg(angles2)
+
+            delta_theta = angles2 - angles1
+
+            theta1 = angles1(1) + delta_theta(1) * (3*t.^2 - 2*t.^3);
+            theta2 = angles1(2) + delta_theta(2) * (3*t.^2 - 2*t.^3);
+            theta3 = angles1(3) + delta_theta(3) * (3*t.^2 - 2*t.^3);
+            theta4 = angles1(4) + delta_theta(4) * (3*t.^2 - 2*t.^3);
+
+            theta4 = max(min(theta4, 104), -120);
+
+            theta1 = obj.base.userAngle2Servo(theta1);
+            theta2 = obj.shoulder.userAngle2Servo(theta2);
+            theta3 = obj.elbow.userAngle2Servo(theta3);
+            theta4 = obj.wrist.userAngle2Servo(theta4);
+
+            
+
+            theta1 = dynDeg2pulse(theta1);
+            theta2 = dynDeg2pulse(theta2);
+            theta3 = dynDeg2pulse(theta3);
+            theta4 = dynDeg2pulse(theta4);
+
+            for i = 1 : n
+                groupSyncWriteClearParam(obj.groupwrite);
+
+                groupSyncWriteAddParam(obj.groupwrite, obj.base.SERVO_ID, theta1(i), 4);
+                groupSyncWriteAddParam(obj.groupwrite, obj.shoulder.SERVO_ID, theta2(i), 4);
+                groupSyncWriteAddParam(obj.groupwrite, obj.elbow.SERVO_ID, theta3(i), 4);
+                groupSyncWriteAddParam(obj.groupwrite, obj.wrist.SERVO_ID, theta4(i), 4);
+
+                groupSyncWriteTxPacket(obj.groupwrite);
+
+            end
+
+        end
+
         function obj = move(obj, point, yDeg) % point is a row vector
             rot = makehgtform('yrotate', deg2rad(yDeg));
             T = [rot(1:3, 1:3), point ; 0 0 0 1];
