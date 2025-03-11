@@ -48,9 +48,9 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 250;
-Gripper_Slight = 200;
-Gripper_Close = 160;
+Gripper_Open = 110;
+Gripper_Slight = 155;
+Gripper_Close = 200;
 
 Z_lim = 2.6;
 

@@ -48,9 +48,9 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 250;
-Gripper_Slight = 200;
-Gripper_Close = 150;
+Gripper_Open = 110;
+Gripper_Slight = 155;
+Gripper_Close = 195;
 
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger,Gripper_Open,Gripper_Slight,Gripper_Close);
 
@@ -60,47 +60,60 @@ stack_grid_coord = [0, 6];
 gate_cube_coord = [9, 0];
 
 coords = [
-    8, -8;
-    5, 5
+    7, -7;
+    3, -8
 ];
 
-rotation_coord = [5,5];
 
-%% --- INIT ROUTINE ---- %%
-Z_lim = 2.7;
+
+%% ---- INIT ROUTINE ---- %%
+
 %robot.initMovementRoutine([15; 0; 20]);
 robot.enableTorque();
 
+%% ---- PARAMETERS ---- %%%
+offset_h = -0.5; %Offset for horizontal grabs
+offset_v = 0.65; %Offset for vertical grabs
+rotate_offset_v = 0.25; %Offset for vertical grabs in rotation (different for some reason)
+
+z_lim_v = 2.5;
+z_lim_h = z_lim_v + offset_h;
+
+n_points = 76;
+
 %% ---- GRAB CUBE FROM GATES ---- %%
-
-
 intermediary_pointCM = grid2cm([5.5, 0, 3.5])';
-grab_n_points = 250;
 
-robot.setMaxSpeed(50);
-gate_cube_coord = [grid2cm(gate_cube_coord), grid2cm(Z_lim - 0.25)]';
 
-outside_gate_coord = [gate_cube_coord(1) - 4, gate_cube_coord(2), grid2cm(Z_lim)]';
+robot.setMaxSpeed(80);
+gate_cube_coord = [grid2cm(gate_cube_coord), grid2cm(z_lim_h)]';
+
+outside_gate_coord = [gate_cube_coord(1) - 4, gate_cube_coord(2), grid2cm(z_lim_h)]';
 
 robot.open_gripper_slightly();
 robot.waitUntilDone();
 
-robot.move_cubic_sync([15 ; 0 ; 20], outside_gate_coord,grab_n_points, 0);
+%Outside gate
+robot.move_cubic_sync([15 ; 0 ; 20], outside_gate_coord,n_points, 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync(outside_gate_coord, gate_cube_coord - [0.5;0;0], grab_n_points, 0);
+%Inside gate
+robot.move_cubic_sync(outside_gate_coord, gate_cube_coord - [0.5;0;0], n_points, 0);
 robot.waitUntilDone();
 
 robot.close_gripper();
 robot.waitUntilDone();
 
-robot.move_sync(gate_cube_coord + [0;0;0.3], 0);
+%Move up a bit
+robot.move_sync(gate_cube_coord + [0;0;0.5], 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync(gate_cube_coord + [0;0;0.3], outside_gate_coord, grab_n_points, 0);
+%Back outside gate
+robot.move_cubic_sync(gate_cube_coord + [0;0;0.3], outside_gate_coord, n_points, 0);
 robot.waitUntilDone();
 
-robot.move_cubic_sync(outside_gate_coord, intermediary_pointCM, grab_n_points/2, 0);
+%Midpoint
+robot.move_cubic_sync(outside_gate_coord, intermediary_pointCM, n_points/2, 0);
 robot.waitUntilDone();
 
 %%
@@ -108,99 +121,140 @@ robot.waitUntilDone();
 % It will be the first cube placed on the stack
 
 stack_coord_up = grid2cm([stack_grid_coord, 10])'; % will have to change dynamically
-stack_coord_down = grid2cm([stack_grid_coord, 3])'; % will also have to change dynamically
+stack_coord_down = grid2cm([stack_grid_coord, z_lim_v])'; % will also have to change dynamically
 
+%Move higher 
 robot.move_cubic_sync_time(intermediary_pointCM,intermediary_pointCM+grid2cm([0;0;4]),100,0);
 robot.waitUntilDone();
 
+%Move above stack
 robot.move_cubic_sync_time(intermediary_pointCM, stack_coord_up,100, 90);
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(stack_coord_up, stack_coord_down, 100, 90);
+%Drop onto stack (with vertical offset, since cube was picked up
+%horizontally)
+temp = getVerticalCoord(stack_coord_down,offset_v);
+robot.move_cubic_sync_time(stack_coord_up, temp, 100, 90);
 robot.waitUntilDone();
 
 robot.open_gripper();
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(stack_coord_down, stack_coord_up, 20, 90);
+%Move back up above stack
+robot.move_cubic_sync_time(temp, stack_coord_up, 30, 90);
 robot.waitUntilDone();
 
-%% ---- PLACE OTHER TWO CUBES ---- %%
+robot.move_cubic_sync_time(temp, stack_coord_up, 30, 0);
+robot.waitUntilDone();
 
+%% ---- PLACE AND ROTATE OTHER TWO CUBES ---- %%
 coord_up1 = grid2cm([coords(1, :), 10])';
-coord_down1 = grid2cm([coords(1, :), 3])';
+coord_down1 = grid2cm([coords(1, :), z_lim_h])';
 
-coord_up2 = grid2cm([coords(1, :), 10])';
-coord_down2 = grid2cm([coords(1, :), 3])';
+coord_up2 = grid2cm([coords(2, :), 10])';
+coord_down2 = grid2cm([coords(2, :), z_lim_h])';
 
+rotation_coord = [5,5];
+rotation_coord_up = grid2cm([rotation_coord,z_lim_h*4])';
+rotation_coord_down = grid2cm(getVerticalCoord([rotation_coord, z_lim_v],offset_v))';
+
+rotate_v = getVerticalCoord( [rotation_coord, z_lim_v ], rotate_offset_v);
+rotate_h = [rotation_coord , z_lim_h];
 
 robot.setMaxSpeed(100);
 robot.wrist.setMaxSpeed(200);
 
-robot.move_cubic_sync_time(stack_coord_up, coord_up1, 30, 90);
-robot.waitUntilDone();
-
-offset_h = -0.4;
-offset_v = 0.75;
-
-robot.rotateCubeNTimes(2, rotation_coord, Z_lim, offset_h, offset_v);
+%% ---- CUBE 2 ---- %%
+robot.move_cubic_sync_time(stack_coord_up, coord_up1, n_points, 0);
 robot.waitUntilDone();
 
 robot.open_gripper();
 robot.waitUntilDone();
 
-% robot.move_cubic_sync_time(coord_up1, coord_down1, 20, 90);
-% robot.waitUntilDone();
+robot.move_cubic_sync_time(coord_up1,coord_down1,n_points,0);
+robot.waitUntilDone();
 
 robot.close_gripper();
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(coord_down1, coord_up1, 20, 90);
+robot.move_cubic_sync(coord_down1,coord_up1,n_points,0);
 robot.waitUntilDone();
 
-% robot now has cube, stacking on top of tower
-robot.move_cubic_sync_time(stack_coord_up + grid2cm([0;0;1]), ...
-                stack_coord_down + grid2cm([0;0;1]), 100, 90);
+robot.move_cubic_sync_time(coord_down1,coord_up1,n_points,90);
 robot.waitUntilDone();
 
-robot.open_gripper();
+robot.move_cubic_sync_time(coord_up1,rotation_coord_up,n_points,90);
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(stack_coord_down + grid2cm([0;0;1]), ...
-                stack_coord_up + grid2cm([0;0;1]), 100, 90);
-robot.waitUntilDone();
-
-%% moving onto 2nd free cube
-robot.move_cubic_sync_time(stack_coord_up, coord_up2, 20, 0);
-robot.waitUntilDone();
-
-robot.rotateCubeNTimes(2, coords(2, :), Z_lim);
+robot.move_cubic_sync_time(rotation_coord_down,n_points,90);
 robot.waitUntilDone();
 
 robot.open_gripper();
 robot.waitUntilDone();
 
-% robot.move_cubic_sync_time(coord_up2, coord_down2, 20, 90);
-% robot.waitUntilDone();
+robot.rotateCubeNTimes(2, rotate_v,rotate_h);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
 
 robot.close_gripper();
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(coord_down2, coord_up2, 20, 90);
+robot.move_cubic_sync_time(rotation_coord_down, stack_coord_up, n_points, 90);
 robot.waitUntilDone();
 
-% robot now has cube, stacking on top of tower
-robot.move_cubic_sync_time(stack_coord_up + grid2cm([0;0;2]), ...
-                stack_coord_down + grid2cm([0;0;2]), 100, 90);
+robot.move_cubic_sync_time(stack_coord_up,stack_coord_down+ [0;0;2.5],n_points,90);
 robot.waitUntilDone();
 
 robot.open_gripper();
 robot.waitUntilDone();
 
-robot.move_cubic_sync_time(stack_coord_down + grid2cm([0;0;2]), ...
-                stack_coord_up + grid2cm([0;0;2]), 100, 90);
+%% ---- Cube 3 ---- %%
+robot.move_cubic_sync_time(stack_coord_up, coord_up2, n_points, 0);
 robot.waitUntilDone();
 
+robot.open_gripper();
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(coord_up2,coord_down2,n_points,0);
+robot.waitUntilDone();
+
+robot.close_gripper();
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coord_down2,coord_up2,n_points,0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(coord_down2,coord_up2,n_points,90);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(coord_up2,rotation_coord_up,n_points,90);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(rotation_coord_down,n_points,90);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
+
+robot.rotateCubeNTimes(1, rotate_v,rotate_h);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
+
+robot.close_gripper();
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(rotation_coord_down, stack_coord_up, n_points, 90);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(stack_coord_up,stack_coord_down+ [0;0;5],n_points,90);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
 
 pause(5)
 
@@ -208,3 +262,13 @@ pause(5)
 robot.disableTorque();
 closePort(port_num);
 fprintf('Port Closed \n');
+
+%%
+function vertical_coord = getVerticalCoord(coord,vertical_offset)
+    vertical_coord = coord;
+    theta = atand(coord(2)/coord(1));
+    vertical_x_offset = vertical_offset * cosd(theta);
+    vertical_y_offset = vertical_offset * sind(theta);
+    vertical_coord(1) = coord(1) + vertical_x_offset;
+    vertical_coord(2) = coord(2) + vertical_y_offset;
+end

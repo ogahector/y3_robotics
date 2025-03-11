@@ -280,24 +280,19 @@ classdef Robot_4DOF
             obj.waitUntilDone();
         end
 
-        function obj = rotateCubeNTimes(obj, n, cube_coord, z_lim_verG,horizontal_offset, vertical_offset)
+        function obj = rotateCubeNTimes(obj, n, cube_coord_v, cube_coord_h)
             arguments
                 obj;
                 n {mustBeInteger};
-                cube_coord {mustBeNumeric};
-                z_lim_verG double;
-                horizontal_offset double;
-                vertical_offset double;
+                cube_coord_v {mustBeNumeric};
+                cube_coord_h {mustBeNumeric};
             end
             
             n_points = 100;
-            theta = atand(cube_coord(2)/cube_coord(1));
-            vertical_x_offset = vertical_offset * cosd(theta);
-            vertical_y_offset = vertical_offset * sind(theta);
-            cube_coord_v = cube_coord + [vertical_x_offset , vertical_y_offset];
-            coord_up = grid2cm([cube_coord, 4*z_lim_verG])';
-            coord_down_vertical = grid2cm([cube_coord_v, z_lim_verG])';
-            coord_down_horizontal = grid2cm([cube_coord, z_lim_verG+horizontal_offset])';
+            coord_up = grid2cm([cube_coord_v(1:2), 4*cube_coord_v(3)])';
+            coord_down_vertical = grid2cm(cube_coord_v)';
+            coord_down_horizontal = grid2cm(cube_coord_h)';
+
 
             
 
@@ -338,7 +333,6 @@ classdef Robot_4DOF
             
                 obj.open_gripper();
                 obj.waitUntilDone();
-                pause(2)
             end
             
             
