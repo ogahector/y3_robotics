@@ -117,6 +117,21 @@ robot.initMovementRoutine([15; 0; 20]);
 robot.waitUntilDone();
 
 
+robot.move_sync([15; 0; 10], 90);
+robot.waitUntilDone();
+robot.move_sync([15; 0; 10],0);
+robot.waitUntilDone();
+
+base.setMaxSpeed(30)
+shoulder.setMaxSpeed(30)
+elbow.setMaxSpeed(30)
+wrist.setMaxSpeed(30)
+
+robot.move_cubic_sync_time([15; 0; 10], [15; 0; 10], n_points, 0);
+robot.waitUntilDone();
+robot.move_cubic_sync_time([15; 0; 10], [15; 0; 10], n_points, 110);
+robot.waitUntilDone();
+
 for i = 0 : 2
     ind = 4*i;
     robot.move_sync([15; 0 ;15],angle_in);
