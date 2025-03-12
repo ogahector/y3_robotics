@@ -70,7 +70,8 @@ classdef Robot_4DOF
                 pause(0.01);%Potentially comment out for 2c
             end
         end
-         
+
+
         function obj = move_cubic_sync_time(obj, varargin)
         % function obj = move_cubic_sync_time(obj, p1, p2, n, yDeg1, yDeg2)
             % arguments
@@ -171,6 +172,9 @@ classdef Robot_4DOF
             end
 
         end
+
+         
+       
 
 
         function obj = move_sync(obj, point, yDeg)
