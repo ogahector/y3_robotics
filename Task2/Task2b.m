@@ -27,16 +27,16 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180, 1);
+                        port_num, 180 - 1.3, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
-                        port_num, +270 - 10.62, -1);
+                        port_num, +270 - 12.4, -1);
 
 elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
-                        port_num, +90 + 10.62, -1);
+                        port_num, +90 + 12.4, -1);
 
 wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
-                        port_num, 180, -1);
+                        port_num, 180 - 0.3, -1);
 
 finger = ServoDynamixel("Finger Joint", DXL_ID5, PROTOCOL_VERSION, ...
                         port_num, 0, 1);
@@ -72,11 +72,11 @@ coords = [
 robot.enableTorque();
 
 %% ---- PARAMETERS ---- %%%
-offset_h = -0.5; %Offset for horizontal grabs
-offset_v = 0.65; %Offset for vertical grabs
-rotate_offset_v = 0.25; %Offset for vertical grabs in rotation (different for some reason)
+offset_h = -0.35; %Offset for horizontal grabs
+offset_v = 2; %Offset for vertical grabs
+rotate_offset_v = 0.15; %Offset for vertical grabs in rotation (different for some reason)
 
-z_lim_v = 2.5;
+z_lim_v = 2.2;
 z_lim_h = z_lim_v + offset_h;
 
 n_points = 76;
@@ -156,9 +156,10 @@ coord_down2 = grid2cm([coords(2, :), z_lim_h])';
 
 rotation_coord = [5,5];
 rotation_coord_up = grid2cm([rotation_coord,z_lim_h*4])';
-rotation_coord_down = grid2cm(getVerticalCoord([rotation_coord, z_lim_v],offset_v))';
+%rotation_coord_down = grid2cm(getVerticalCoord([rotation_coord, z_lim_v],offset_v))';
 
 rotate_v = getVerticalCoord( [rotation_coord, z_lim_v ], rotate_offset_v);
+rotation_coord_down = grid2cm(rotate_v)';
 rotate_h = [rotation_coord , z_lim_h];
 
 robot.setMaxSpeed(100);
@@ -252,7 +253,7 @@ robot.waitUntilDone();
 
 robot.move_cubic_sync_time(stack_coord_up,stack_coord_down+ [0;0;5],n_points,90);
 robot.waitUntilDone();
-
+max
 robot.open_gripper();
 robot.waitUntilDone();
 

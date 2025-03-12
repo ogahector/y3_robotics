@@ -52,7 +52,7 @@ Gripper_Open = 110;
 Gripper_Slight = 155;
 Gripper_Close = 200;
 
-Z_lim = 2.6;
+Z_lim = 2.5;
 
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
