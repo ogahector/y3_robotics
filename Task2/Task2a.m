@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -27,13 +27,13 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180, 1);
+                        port_num, 180 - 1.5, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
-                        port_num, +270 - 10.62, -1);
+                        port_num, +270 - 12.4, -1);
 
 elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
-                        port_num, +90 + 10.62, -1);
+                        port_num, +90 + 12.4, -1);
 
 wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
                         port_num, 180, -1);
@@ -52,7 +52,7 @@ Gripper_Open = 110;
 Gripper_Slight = 155;
 Gripper_Close = 200;
 
-Z_lim = 2.5;
+Z_lim = 2.4;
 
 % finger.setOperatingMode('pos');
 % finger.setGoalCurrent(80);%80 ma in practice, check doc
@@ -97,58 +97,56 @@ coords = [
 % Disable torque <=> enable configuration
 robot.disableTorque();
 
-% base.setMaxSpeed(30)
-% shoulder.setMaxSpeed(30)
-% elbow.setMaxSpeed(30)
-% wrist.setMaxSpeed(30)
-
 %% ---- Move ---- %%
 robot.setMaxSpeed(120);
 robot.enableTorque();
-pause(1)
-
 
 %% ---- MOVE USING CUBIC ---- %%
 angle_in = 90;
-n_points = 50;
+n_points = 20;
 % Init
-% robot.move([15; 0; 20], 90);
-robot.initMovementRoutine([15; 0; 20]);
+robot.move_cubic_sync_time(POINT, n_points, 0);
 robot.waitUntilDone();
 
 
 for i = 0 : 2
     ind = 4*i;
-    robot.move_sync([15; 0 ;15],angle_in);
-    robot.waitUntilDone();
-    % robot.move(coords(1, :)', 90);
-    robot.move_cubic_sync_time([15; 0; 20], coords(ind + 1, :)', n_points, angle_in, angle_in);
+
+
+    robot.move_cubic_sync_time(coords(ind + 1, :)', n_points, angle_in);
     robot.waitUntilDone();
     robot.open_gripper();
     robot.waitUntilDone();
-    % robot.move(coords(2, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+2, :)', n_points, angle_in, angle_in);
+
+    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+2, :)', n_points, angle_in);
     robot.waitUntilDone();
     robot.close_gripper();
     robot.waitUntilDone();
-    % robot.move(coords(1, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+2, :)', coords(ind+1, :)', n_points, angle_in, angle_in);
+
+    robot.move_cubic_sync_time(coords(ind+2, :)', coords(ind+1, :)', n_points, angle_in);
     robot.waitUntilDone();
     
-    % robot.move(coords(3, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+3, :)', n_points, angle_in, angle_in);
+
+    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+3, :)', n_points, angle_in);
     robot.waitUntilDone();
-    % robot.move(coords(4, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+3, :)', coords(ind+4, :)', n_points, angle_in, angle_in);
+
+    robot.move_cubic_sync_time(coords(ind+3, :)', coords(ind+4, :)', n_points, angle_in);
     robot.waitUntilDone();
+
     robot.open_gripper();
     robot.waitUntilDone();
-    % robot.move(coords(3, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+4, :)', coords(ind+3, :)', n_points, angle_in, angle_in);
+
+    robot.close_gripper();
+    robot.waitUntilDone();
+
+    robot.open_gripper();
+    robot.waitUntilDone();
+
+    robot.move_cubic_sync_time(coords(ind+4, :)', coords(ind+3, :)', n_points, angle_in);
     robot.waitUntilDone();
 end
 
-
+robot.move_cubic_sync_time(POINT, n_points, 0);
 pause(10)
 
 %% ---- End ---- %%

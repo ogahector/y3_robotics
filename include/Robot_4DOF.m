@@ -53,10 +53,20 @@ classdef Robot_4DOF
                 n = 20;
                 yDeg = 0;
             end
+            
+            % angles = obj.getAngles();
+            % 
+            % gamma = angles(2) + angles(3) + angles(4); % curr angle
+            % 
+            % % angles = cubic_interpol(gamma, yDeg, n);
+            % t = linspace(0, 1, n);
+            % delta_ang = yDeg - gamma;
+            % Yangles = gamma + delta_ang * (3*t.^2 - 2*t.^3);
 
             points = cubic_interpol(p1,p2,n);
             for i = 1:size(points,2)
-                obj.move_sync(points(:,i),yDeg);
+                % obj.move_sync(points(:,i),Yangles(i));
+                obj.move_sync(points(:, i), yDeg);
                 pause(0.01);%Potentially comment out for 2c
             end
         end
@@ -293,10 +303,6 @@ classdef Robot_4DOF
             coord_down_vertical = grid2cm(cube_coord_v)';
             coord_down_horizontal = grid2cm(cube_coord_h)';
 
-
-            
-
-            % 
             % obj.move_sync(coord_up, 0);
             % obj.waitUntilDone();
             % 
@@ -325,7 +331,7 @@ classdef Robot_4DOF
                 obj.move_cubic_sync(coord_down_horizontal, coord_up, n_points, 0);
                 obj.waitUntilDone();
             
-                obj.move_sync(coord_up, 90);
+                obj.move_cubic_sync_time(coord_up, n_points, 90);
                 obj.waitUntilDone();
             
                 obj.move_cubic_sync_time(coord_up, coord_down_vertical, n_points, 90);

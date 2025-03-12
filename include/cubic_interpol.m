@@ -1,7 +1,7 @@
 function points = cubic_interpol(p1, p2, n)
     t = linspace(0, 1, n);
 
-    % Cubic interpolation formula: P(t) = P0 + Δ*(3t² - 2t³)
+    % Cubic interpolation formula: P(t) = P0 + Delta*(3t² - 2t³)
     delta_x = p2(1) - p1(1);
     delta_y = p2(2) - p1(2);
     delta_z = p2(3) - p1(3);

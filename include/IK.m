@@ -41,39 +41,56 @@ end
 %% ---- Joint 3 Position ---- %%    
     x3 = x_e_planar - L4*cos(gamma); 
     z3 = z_e_planar - L4*sin(gamma) - L1;
-    % z3 = z_e_planar - L4*sin(gamma);
+
+    % Project to workspace boundary if needed
+    D = sqrt(x3^2 + z3^2);
+    inner_radius = abs(L2 - L3);
+    outer_radius = L2 + L3;
+    adjusted = false;
+
+    if D > outer_radius
+        % Project to outer boundary
+        scale = outer_radius / D;
+        x3 = x3 * scale;
+        z3 = z3 * scale;
+        adjusted = true;
+    elseif D < inner_radius
+        % Project to inner boundary
+        scale = inner_radius / D;
+        x3 = x3 * scale;
+        z3 = z3 * scale;
+        adjusted = true;
+    end
+
+    if adjusted
+        disp('Target adjusted to closest reachable point.');
+    end
 
 %% ---- Check Range Validity ---- %%
     cos_theta3 = (x3^2 + z3^2 - L2^2 - L3^2) / (2 * L2 * L3);
     cos_theta3 = max(min(cos_theta3, 1), -1);
     sin_theta3 = sqrt(1 - cos_theta3^2);
-    % alpha = acos(cos_theta3);
 
 %% ---- Theta3 up & down solutions ---- %%
     theta3_up = atan2(sin_theta3, cos_theta3);
     theta3_down = atan2(-sin_theta3, cos_theta3);
 
-%% ---- Theta2 up & down solutions ---- %%
-    % theta2_up = atan2(z3, x3) - asin( (L3*sin(alpha))/sqrt(x3^2 + z3^2) );
-    % theta2_down = pi/2 - theta2_up;
-    theta2 = atan2(z3, x3) - atan2(L3 * sin(theta3_down), L2 + L3 * cos(theta3_down));
-    % theta2_down = atan2(z3, x3) + atan2(L3 * sin(theta3_down), L2 + L3 * cos(theta3_down));
+%% ---- Theta2 solutions ---- %%
+    theta2_up = atan2(z3, x3) - atan2(L3 * sin(theta3_up), L2 + L3 * cos(theta3_up));
+    theta2_down = atan2(z3, x3) - atan2(L3 * sin(theta3_down), L2 + L3 * cos(theta3_down));
 
 %% ---- Theta4 infer from gamma ---- %%
-    theta4_up = gamma - theta2 - theta3_up;
-    theta4_down = gamma - theta2 - theta3_down;
- 
+    theta4_up = gamma - theta2_up - theta3_up;
+    theta4_down = gamma - theta2_down - theta3_down;
 
     if isempty(config)
-        angles = [theta1, theta2, theta3_up, theta3_up];
+        angles = [theta1, theta2_up, theta3_up, theta4_up];
         return
     end
 
     if lower(config) == "up"
-        angles = [theta1, theta2, theta3_up, theta4_up];
+        angles = [theta1, theta2_up, theta3_up, theta4_up];
     else
-        angles = [theta1, theta2, theta3_down, theta4_down];
+        angles = [theta1, theta2_down, theta3_down, theta4_down];
     end
-
-    angles = [theta1, theta2, theta3_down, theta4_down];
 end
