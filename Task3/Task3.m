@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = '/dev/ttyUSB0';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -49,125 +49,150 @@ wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
 Gripper_Open = 110;
-Gripper_Slight = 155;
+Gripper_Slight = 130;
 Gripper_Close = 200;
 
-Z_lim = 2.6;
+z_lim = 2.6;
 
-% finger.setOperatingMode('pos');
-% finger.setGoalCurrent(80);%80 ma in practice, check doc
+
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open, Gripper_Slight, Gripper_Close);
 
+%% ---- Variables ---- %%
+n_points = 50;
+pour_angle = 75;
+pour_offset = grid2cm([-0.5; -0.5; -1.5]); %This will make the beaker move back and down a bit while it pours
+n_stirs = 4; %How many times we stir
 
 %% ---- Process Points to Visit ---- %%
 
+%Beaker 1 (6,-6)
+beaker_1_coord_down = grid2cm([6 , -6, z_lim + 2])';%Extra height
+beaker_1_coord_up = beaker_1_coord_down + grid2cm([0 ; 0 ; 7]);
 
-grid_start1 = [9, 0];
-grid_end1 = [5, 5];
+%Beaker 2 (5,5)
+beaker_2_coord_down = grid2cm([5,5,z_lim])';
+beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 7]);
 
-grid_start2 = [3, -8];
-grid_end2 = [4, 0];
+pour_coord = beaker_2_coord_up + pour_offset;
 
-grid_start3 = [6, -6];
-grid_end3 = [0, 6];
+%Stir (0,-8)
+stir_coord_down = grid2cm([0 ; -8 ; z_lim]);%Extra height
+stir_coord_up = stir_coord_down + grid2cm([0 ; 0 ; 7]);
 
-coords = [
-    grid2cm([grid_start1, 6]);
-    grid2cm([grid_start1, Z_lim]);
-    grid2cm([grid_end1, 6]);
-    grid2cm([grid_end1, Z_lim]);
-    
-    grid2cm([grid_start2, 6]);
-    grid2cm([grid_start2, Z_lim]);
-    grid2cm([grid_end2, 6]);
-    grid2cm([grid_end2, Z_lim]);
+circle_radius = 3.5;
+circle_n = 100; % Number of points
+circle_coord_down = grid2cm([6 ; 6; z_lim + 2]);%Extra height
+circle_coord_up = circle_coord_down + grid2cm([0 ; 0; 5]);
+circle_points = circle(circle_coord_down,circle_radius,circle_n);
 
-    grid2cm([grid_start3, 9]);
-    grid2cm([grid_start3, Z_lim]);
-    grid2cm([grid_end3, 9]);
-    grid2cm([grid_end3, Z_lim]);
-];
-
-
-
-
-% angles = rad2deg(angles);
 
 %% ---- Configure ---- %%
 % Disable torque <=> enable configuration
 robot.disableTorque();
-
-% base.setMaxSpeed(30)
-% shoulder.setMaxSpeed(30)
-% elbow.setMaxSpeed(30)
-% wrist.setMaxSpeed(30)
-
-%% ---- Move ---- %%
 robot.setMaxSpeed(120);
 robot.enableTorque();
-pause(1)
 
+%% ---- Grab Beaker 1 ---- %%
 
-%% ---- MOVE USING CUBIC ---- %%
-angle_in = 90;
-n_points = 50;
-% Init
-% robot.move([15; 0; 20], 90);
-robot.initMovementRoutine([15; 0; 20]);
+robot.open_gripper();
+robot.waitUntilDone();%Should move these calls inside the functions to verify internally
+
+%Move above beaker 1
+robot.move_cubic_sync_time(beaker_1_coord_up,n_points,0);
 robot.waitUntilDone();
 
-
-robot.move_sync([15; 0; 10], 90);
-robot.waitUntilDone();
-robot.move_sync([15; 0; 10],0);
+%Go down 
+robot.move_cubic_sync(beaker_1_coord_up,beaker_1_coord_down,n_points,0);
 robot.waitUntilDone();
 
-base.setMaxSpeed(30)
-shoulder.setMaxSpeed(30)
-elbow.setMaxSpeed(30)
-wrist.setMaxSpeed(30)
+pause(2)%Here so I can place 'beaker', not necessary in reality
 
-robot.move_cubic_sync_time([15; 0; 10], [15; 0; 10], n_points, 0);
-robot.waitUntilDone();
-robot.move_cubic_sync_time([15; 0; 10], [15; 0; 10], n_points, 110);
+%Grab it (wide bottle so slight here)
+robot.open_gripper_slightly();
 robot.waitUntilDone();
 
-for i = 0 : 2
-    ind = 4*i;
-    robot.move_sync([15; 0 ;15],angle_in);
-    robot.waitUntilDone();
-    % robot.move(coords(1, :)', 90);
-    robot.move_cubic_sync_time([15; 0; 20], coords(ind + 1, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
-    robot.open_gripper();
-    robot.waitUntilDone();
-    % robot.move(coords(2, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+2, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
-    robot.close_gripper();
-    robot.waitUntilDone();
-    % robot.move(coords(1, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+2, :)', coords(ind+1, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
-    
-    % robot.move(coords(3, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+1, :)', coords(ind+3, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
-    % robot.move(coords(4, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+3, :)', coords(ind+4, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
-    robot.open_gripper();
-    robot.waitUntilDone();
-    % robot.move(coords(3, :)', 90);
-    robot.move_cubic_sync_time(coords(ind+4, :)', coords(ind+3, :)', n_points, angle_in, angle_in);
-    robot.waitUntilDone();
+%Pick it back up
+robot.move_cubic_sync(beaker_1_coord_down,beaker_1_coord_up,n_points,0);
+robot.waitUntilDone();
+
+%% ---- Move and Pour ---- %%
+%Move above beaker 2
+robot.move_cubic_sync(beaker_1_coord_up,beaker_2_coord_up,n_points,0);
+robot.waitUntilDone();
+
+%Pour slowly (*2 points)
+robot.move_cubic_sync_time(pour_coord,n_points*2,pour_angle);
+robot.waitUntilDone();
+
+%Stop pouring slowly (*2 points)
+robot.move_cubic_sync_time(beaker_2_coord_up,n_points*2,0);
+robot.waitUntilDone();
+
+%% ---- Replace beaker 1 ---- %%
+%Back above beaker 1
+robot.move_cubic_sync(beaker_2_coord_up,beaker_1_coord_up,n_points,0);
+robot.waitUntilDone();
+
+%Put it down
+robot.move_cubic_sync(beaker_1_coord_up,beaker_1_coord_down,n_points,0);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
+
+%Move back above
+robot.move_cubic_sync(beaker_1_coord_down,beaker_1_coord_up,n_points,0);
+robot.waitUntilDone();
+
+%% ---- Grab Stirrer ---- %%
+robot.move_cubic_sync_time(stir_coord_up,n_points,0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(stir_coord_up,stir_coord_down,n_points,0);
+robot.waitUntilDone();
+
+robot.close_gripper(); %Check the gripper closing here
+robot.waitUntilDone();
+
+robot.move_cubic_sync(stir_coord_down,stir_coord_up,n_points,0);
+robot.waitUntilDone();
+
+%% ---- Move and Stir ---- %%
+robot.move_cubic_sync_time(stir_coord_up,circle_coord_up,n_points,0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(circle_coord_up,circle_coord_down,n_points,0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(circle_coord_down,circle_points(:,1),n_points,0);
+
+circle_interp_n = 25;
+for j = 1:n_stirs
+    for i = 1:(size(circle_points,2) -1 )
+        % robot.move_cubic_sync_time(circle_points(:,i),circle_interp_n,0);
+        % robot.waitUntilDone();
+        robot.move_sync(circle_points(:,i),0);
+        pause(0.01);
+    end
 end
 
+robot.move_cubic_sync_time(circle_coord_up,n_points,0);
+robot.waitUntilDone();
 
-pause(10)
 
+pause(5);
 %% ---- End ---- %%
 robot.disableTorque();
-
 closePort(port_num);
 fprintf('Port Closed \n');
+
+%%
+
+function points = circle(center,radius,n)
+    x = center(1);
+    y = center(2);
+    th = 0:2*pi/n:2*pi;
+    xunit = radius * cos(th) + x;
+    yunit = radius * sin(th) + y;
+    points = [[xunit ; yunit] ; repelem(center(3),n+1)];
+end

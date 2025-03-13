@@ -37,7 +37,7 @@ function frame = FK(angles, config)
         T{i+1} = T{i} * Ti;
     end
 
-    frame = T{5}
+    frame = T{5};
 
     if isempty(config)
         return

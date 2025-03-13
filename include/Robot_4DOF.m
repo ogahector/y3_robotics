@@ -44,14 +44,18 @@ classdef Robot_4DOF
         end
         
 
-
-        function obj = move_cubic_sync(obj,p1,p2,n, yDeg)
-            arguments
-                obj = [];
-                p1 = 0;
-                p2 = 0;
-                n = 20;
-                yDeg = 0;
+        function obj = move_cubic_sync(obj,varargin)%Always put two points in, one has a weird offset from FK
+            if (nargin == 5) %Two points given
+                p1 = varargin{1};
+                p2 = varargin{2};
+                n = varargin{3};
+                yDeg = varargin{4};
+            elseif (nargin == 4) %One point given
+                p2 = varargin{1};
+                n = varargin{2};
+                yDeg = varargin{3};
+                frame = FK(deg2rad(obj.getAngles()));
+                p1 = frame(1:3,4);
             end
             
             % angles = obj.getAngles();
@@ -63,6 +67,7 @@ classdef Robot_4DOF
             % delta_ang = yDeg - gamma;
             % Yangles = gamma + delta_ang * (3*t.^2 - 2*t.^3);
 
+
             points = cubic_interpol(p1,p2,n);
             for i = 1:size(points,2)
                 % obj.move_sync(points(:,i),Yangles(i));
@@ -73,16 +78,6 @@ classdef Robot_4DOF
 
 
         function obj = move_cubic_sync_time(obj, varargin)
-        % function obj = move_cubic_sync_time(obj, p1, p2, n, yDeg1, yDeg2)
-            % arguments
-            %     obj = [];
-            %     p1 = [0;0;0];
-            %     p2 = [0;0;0];
-            %     n = 20;
-            %     yDeg1 = 0;
-            %     yDeg2 = yDeg1;
-            % end
-
             %2 points given
             if nargin == 6 
                 p1 = varargin{1};
