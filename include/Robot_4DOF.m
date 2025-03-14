@@ -204,6 +204,35 @@ classdef Robot_4DOF
 
         end
 
+        function obj = move_cubic_sync_avoiding(obj, origin, destination, wallpt1, wallpt2, height, walltol, n_points)
+            arguments
+                obj;
+                origin;
+                destination;
+                wallpt1;
+                wallpt2;
+                height;
+                walltol;
+                n_points;
+            end
+            % MUST ALL BE IN CM ALREADY!! (makes it easier)
+            normal_vector = cross( [wallpt2, 0]' - [wallpt1, 0]', [wallpt2, 0]' - [wallpt1, height]')
+                
+            u = destination - origin;
+            dotprod = dot(wallpt1, u);
+
+            if(abs(dotprod) > 0)
+                w = origin - wallpt1;
+                fac = -dot(normal_vector, w) / dotprod;
+                u = u* fac;
+                point_on_wall = origin + u
+            else
+                error('bad points given')
+            end
+
+            
+        end
+
         
 
         function obj = open_gripper(obj)

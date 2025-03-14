@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -59,9 +59,21 @@ robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open, Gripper_S
 
 %% ---- Variables ---- %%
 n_points = 50;
-pour_angle = 75;
+n_pour_points = 5;
+pour_angle = 80;
 pour_offset = grid2cm([-0.5; -0.5; -1.5]); %This will make the beaker move back and down a bit while it pours
 n_stirs = 4; %How many times we stir
+
+r_beaker = 2e-2;
+L_beaker = 8e-2;
+V_initial = 80e-3;
+h_initial = V_initial / (pi*r_beaker^2);
+
+% wall line definition
+linept1 = [2, 0];
+linept2 = [9, -3];
+wallheight = 5;
+walltol = 1;
 
 %% ---- Process Points to Visit ---- %%
 
@@ -71,7 +83,7 @@ beaker_1_coord_up = beaker_1_coord_down + grid2cm([0 ; 0 ; 7]);
 
 %Beaker 2 (5,5)
 beaker_2_coord_down = grid2cm([5,5,z_lim])';
-beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 7]);
+beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 2]);
 
 pour_coord = beaker_2_coord_up + pour_offset;
 
@@ -79,11 +91,17 @@ pour_coord = beaker_2_coord_up + pour_offset;
 stir_coord_down = grid2cm([0 ; -8 ; z_lim]);%Extra height
 stir_coord_up = stir_coord_down + grid2cm([0 ; 0 ; 7]);
 
-circle_radius = 3.5;
+circle_radius = 2;
 circle_n = 100; % Number of points
 circle_coord_down = grid2cm([6 ; 6; z_lim + 2]);%Extra height
 circle_coord_up = circle_coord_down + grid2cm([0 ; 0; 5]);
 circle_points = circle(circle_coord_down,circle_radius,circle_n);
+
+% wall intermediary point
+wall_coord_up = grid2cm([mean([linept1(1), linept2(1)]), ...
+                         mean([linept1(2), linept2(2)]), ...
+                         wallheight + 1
+    ])';
 
 
 %% ---- Configure ---- %%
@@ -117,20 +135,45 @@ robot.waitUntilDone();
 
 %% ---- Move and Pour ---- %%
 %Move above beaker 2
-robot.move_cubic_sync(beaker_1_coord_up,beaker_2_coord_up,n_points,0);
+[beaker2pourBefore, beaker2pourAfter] = getIntermediaryWallPoints(wall_coord_up, walltol, beaker_1_coord_up, beaker_2_coord_up);
+
+robot.move_cubic_sync(beaker_1_coord_up, beaker2pourBefore, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(beaker2pourBefore, beaker2pourAfter, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(beaker2pourAfter,beaker_2_coord_up,n_points,0);
 robot.waitUntilDone();
 
 %Pour slowly (*2 points)
 robot.move_cubic_sync_time(pour_coord,n_points*2,pour_angle);
 robot.waitUntilDone();
+pause(1)
 
 %Stop pouring slowly (*2 points)
 robot.move_cubic_sync_time(beaker_2_coord_up,n_points*2,0);
 robot.waitUntilDone();
 
+% current_angle = 0;
+% while ~donePouring(r_beaker, h_initial, L_beaker, current_angle, 30e-3)
+%     current_angle = current_angle + 1;
+%     robot.move_cubic_sync_time(beaker_2_coord_up, n_pour_points, current_angle);
+%     robot.waitUntilDone();
+% end
+
 %% ---- Replace beaker 1 ---- %%
 %Back above beaker 1
-robot.move_cubic_sync(beaker_2_coord_up,beaker_1_coord_up,n_points,0);
+[pour2beakerBefore, pour2beakerAfter] = getIntermediaryWallPoints(wall_coord_up, walltol, beaker_2_coord_up, beaker_1_coord_up);
+
+robot.move_cubic_sync(beaker_2_coord_up, pour2beakerBefore, n_points, 0);
+robot.waitUntilDone();
+
+
+robot.move_cubic_sync(pour2beakerBefore, pour2beakerAfter, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(pour2beakerAfter,beaker_1_coord_up,n_points,0);
 robot.waitUntilDone();
 
 %Put it down
@@ -158,7 +201,15 @@ robot.move_cubic_sync(stir_coord_down,stir_coord_up,n_points,0);
 robot.waitUntilDone();
 
 %% ---- Move and Stir ---- %%
-robot.move_cubic_sync_time(stir_coord_up,circle_coord_up,n_points,0);
+[stir2circleBefore, stir2circleAfter] = getIntermediaryWallPoints(wall_coord_up, walltol, stir_coord_up, circle_coord_up);
+
+robot.move_cubic_sync(stir_coord_up, stir2circleBefore, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(stir2circleBefore, stir2circleAfter, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync_time(stir2circleAfter,circle_coord_up,n_points,0);
 robot.waitUntilDone();
 
 robot.move_cubic_sync(circle_coord_up,circle_coord_down,n_points,0);
@@ -195,4 +246,13 @@ function points = circle(center,radius,n)
     xunit = radius * cos(th) + x;
     yunit = radius * sin(th) + y;
     points = [[xunit ; yunit] ; repelem(center(3),n+1)];
+end
+
+function [ptBefore, ptAfter] = getIntermediaryWallPoints(wallmidpoint, walltol, pt1, pt2)
+    dir_vector = pt2(1:2) - pt1(1:2);
+    dir_vector = dir_vector / (norm(dir_vector));
+
+    ptBefore = wallmidpoint + [dir_vector * -grid2cm(walltol); wallmidpoint(3)];
+    ptAfter = wallmidpoint + [dir_vector * grid2cm(walltol); wallmidpoint(3)];
+
 end
