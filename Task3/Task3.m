@@ -27,13 +27,13 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180, 1);
+                        port_num, 180 - 1.5, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
-                        port_num, +270 - 10.62, -1);
+                        port_num, +270 - 12.4, -1);
 
 elbow = ServoDynamixel("Elbow Joint", DXL_ID3, PROTOCOL_VERSION, ...
-                        port_num, +90 + 10.62, -1);
+                        port_num, +90 + 12.4, -1);
 
 wrist = ServoDynamixel("Wrist Joint", DXL_ID4, PROTOCOL_VERSION, ...
                         port_num, 180, -1);
@@ -48,20 +48,26 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 110;
-Gripper_Slight = 130;
-Gripper_Close = 200;
+Gripper_Open = 80;
+Gripper_Slight = 156;
+Gripper_Close = 180;
 
-z_lim = 2.6;
+z_lim = 1.5;
 
 
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open, Gripper_Slight, Gripper_Close);
 
 %% ---- Variables ---- %%
+beaker_grab_grid_coords = [6, -6];
+desired_pouring_coords = [5, 5];
+tool_grab_grid_coords = [0, -8];
+
 n_points = 50;
 n_pour_points = 5;
-pour_angle = 80;
-pour_offset = grid2cm([-0.5; -0.5; -1.5]); %This will make the beaker move back and down a bit while it pours
+pour_angle = 90;
+pour_offset_mag = 2;
+theta_temp = atan2(desired_pouring_coords(2), desired_pouring_coords(1));
+pour_offset = grid2cm([-pour_offset_mag*cos(theta_temp); -pour_offset_mag*sin(theta_temp); -2]); %This will make the beaker move back and down a bit while it pours
 n_stirs = 4; %How many times we stir
 
 r_beaker = 2e-2;
@@ -71,30 +77,30 @@ h_initial = V_initial / (pi*r_beaker^2);
 
 % wall line definition
 linept1 = [2, 0];
-linept2 = [9, -3];
-wallheight = 5;
+linept2 = [9, 0];
+wallheight = 12;
 walltol = 1;
 
 %% ---- Process Points to Visit ---- %%
 
 %Beaker 1 (6,-6)
-beaker_1_coord_down = grid2cm([6 , -6, z_lim + 2])';%Extra height
-beaker_1_coord_up = beaker_1_coord_down + grid2cm([0 ; 0 ; 7]);
+beaker_1_coord_down = grid2cm([6 , -6, z_lim])';%Extra height
+beaker_1_coord_up = beaker_1_coord_down + grid2cm([0 ; 0 ; 6]);
 
 %Beaker 2 (5,5)
 beaker_2_coord_down = grid2cm([5,5,z_lim])';
-beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 2]);
+beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 7]);
 
 pour_coord = beaker_2_coord_up + pour_offset;
 
 %Stir (0,-8)
-stir_coord_down = grid2cm([0 ; -8 ; z_lim]);%Extra height
-stir_coord_up = stir_coord_down + grid2cm([0 ; 0 ; 7]);
+stir_coord_down = grid2cm([0 ; -8 ; z_lim+1]);%Extra height
+stir_coord_up = stir_coord_down + grid2cm([0 ; 0 ; 8]);
 
-circle_radius = 2;
+circle_radius = 1.5;
 circle_n = 100; % Number of points
-circle_coord_down = grid2cm([6 ; 6; z_lim + 2]);%Extra height
-circle_coord_up = circle_coord_down + grid2cm([0 ; 0; 5]);
+circle_coord_down = grid2cm([6 ; 6; z_lim + 5]);%Extra height
+circle_coord_up = circle_coord_down + grid2cm([0 ; 0; 2.5]);
 circle_points = circle(circle_coord_down,circle_radius,circle_n);
 
 % wall intermediary point
@@ -120,7 +126,7 @@ robot.move_cubic_sync_time(beaker_1_coord_up,n_points,0);
 robot.waitUntilDone();
 
 %Go down 
-robot.move_cubic_sync(beaker_1_coord_up,beaker_1_coord_down,n_points,0);
+robot.move_cubic_sync(beaker_1_coord_up,beaker_1_coord_down,2*n_points,0);
 robot.waitUntilDone();
 
 pause(2)%Here so I can place 'beaker', not necessary in reality
@@ -146,8 +152,11 @@ robot.waitUntilDone();
 robot.move_cubic_sync(beaker2pourAfter,beaker_2_coord_up,n_points,0);
 robot.waitUntilDone();
 
+% robot.move_cubic_sync_time(pour_coord, n_points, 0);
+% robot.waitUntilDone();
+
 %Pour slowly (*2 points)
-robot.move_cubic_sync_time(pour_coord,n_points*2,pour_angle);
+robot.move_cubic_sync_time(pour_coord,n_points*4,pour_angle);
 robot.waitUntilDone();
 pause(1)
 
@@ -197,7 +206,7 @@ robot.waitUntilDone();
 robot.close_gripper(); %Check the gripper closing here
 robot.waitUntilDone();
 
-robot.move_cubic_sync(stir_coord_down,stir_coord_up,n_points,0);
+robot.move_cubic_sync(stir_coord_down,stir_coord_up,2*n_points,0);
 robot.waitUntilDone();
 
 %% ---- Move and Stir ---- %%
@@ -230,6 +239,18 @@ end
 robot.move_cubic_sync_time(circle_coord_up,n_points,0);
 robot.waitUntilDone();
 
+%% ---- Put Stirrer Back ---- %%
+robot.move_cubic_sync(circle_coord_up, stir2circleAfter, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(stir2circleAfter, stir2circleBefore, n_points, 0);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(stir2circleBefore, stir_coord_up, n_points, 0);
+robot.waitUntilDone();
+
+robot.open_gripper();
+robot.waitUntilDone();
 
 pause(5);
 %% ---- End ---- %%
@@ -252,7 +273,7 @@ function [ptBefore, ptAfter] = getIntermediaryWallPoints(wallmidpoint, walltol, 
     dir_vector = pt2(1:2) - pt1(1:2);
     dir_vector = dir_vector / (norm(dir_vector));
 
-    ptBefore = wallmidpoint + [dir_vector * -grid2cm(walltol); wallmidpoint(3)];
-    ptAfter = wallmidpoint + [dir_vector * grid2cm(walltol); wallmidpoint(3)];
+    ptBefore = [wallmidpoint(1:2);0] + [dir_vector * -grid2cm(walltol); wallmidpoint(3)];
+    ptAfter = [wallmidpoint(1:2);0] + [dir_vector * grid2cm(walltol); wallmidpoint(3)];
 
 end

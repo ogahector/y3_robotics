@@ -42,29 +42,29 @@ end
     x3 = x_e_planar - L4*cos(gamma); 
     z3 = z_e_planar - L4*sin(gamma) - L1;
 
-    % Project to workspace boundary if needed
-    D = sqrt(x3^2 + z3^2);
-    inner_radius = abs(L2 - L3);
-    outer_radius = L2 + L3;
-    adjusted = false;
-
-    if D > outer_radius
-        % Project to outer boundary
-        scale = outer_radius / D;
-        x3 = x3 * scale;
-        z3 = z3 * scale;
-        adjusted = true;
-    elseif D < inner_radius
-        % Project to inner boundary
-        scale = inner_radius / D;
-        x3 = x3 * scale;
-        z3 = z3 * scale;
-        adjusted = true;
-    end
-
-    if adjusted
-        disp('Target adjusted to closest reachable point.');
-    end
+    % % Project to workspace boundary if needed
+    % D = sqrt(x3^2 + z3^2);
+    % inner_radius = abs(L2 - L3);
+    % outer_radius = L2 + L3;
+    % adjusted = false;
+    % 
+    % if D > outer_radius
+    %     % Project to outer boundary
+    %     scale = outer_radius / D;
+    %     x3 = x3 * scale;
+    %     z3 = z3 * scale;
+    %     adjusted = true;
+    % elseif D < inner_radius
+    %     % Project to inner boundary
+    %     scale = inner_radius / D;
+    %     x3 = x3 * scale;
+    %     z3 = z3 * scale;
+    %     adjusted = true;
+    % end
+    % 
+    % if adjusted
+    %     disp('Target adjusted to closest reachable point.');
+    % end
 
 %% ---- Check Range Validity ---- %%
     cos_theta3 = (x3^2 + z3^2 - L2^2 - L3^2) / (2 * L2 * L3);

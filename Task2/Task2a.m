@@ -14,7 +14,7 @@ DXL_ID3                     = 13;
 DXL_ID4                     = 14;
 DXL_ID5                      = 15;
 BAUDRATE                    = 1000000;
-DEVICENAME                  = 'COM11';       % Check which port is being used on your controller
+DEVICENAME                  = 'COM14';       % Check which port is being used on your controller
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 POINT = [15 ; 0 ; 25];
@@ -62,14 +62,14 @@ robot = Robot_4DOF(base, shoulder, elbow, wrist, finger, Gripper_Open, Gripper_S
 %% ---- Process Points to Visit ---- %%
 
 
-grid_start1 = [9, 0];
-grid_end1 = [5, 5];
+grid_start1 = [0, 8];
+grid_end1 = [0, -6];
 
-grid_start2 = [3, -8];
-grid_end2 = [4, 0];
+grid_start2 = [5, 5];
+grid_end2 = [5, -5];
 
-grid_start3 = [6, -6];
-grid_end3 = [0, 6];
+grid_start3 = [8, 3];
+grid_end3 = [0, 4];
 
 coords = [
     grid2cm([grid_start1, 6]);
