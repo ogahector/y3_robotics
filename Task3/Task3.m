@@ -48,9 +48,9 @@ elbow.setMovingThreshold(mov_threshold);
 wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
-Gripper_Open = 80;
-Gripper_Slight = 156;
-Gripper_Close = 180;
+Gripper_Open = 85;
+Gripper_Slight = 166;
+Gripper_Close = 198;
 
 z_lim = 1.5;
 
@@ -94,7 +94,7 @@ beaker_2_coord_up = beaker_2_coord_down + grid2cm([0 ; 0 ; 7]);
 pour_coord = beaker_2_coord_up + pour_offset;
 
 %Stir (0,-8)
-stir_coord_down = grid2cm([0 ; -8 ; z_lim+1]);%Extra height
+stir_coord_down = grid2cm([0 ; -8 ; z_lim]);%Extra height
 stir_coord_up = stir_coord_down + grid2cm([0 ; 0 ; 8]);
 
 circle_radius = 1.5;
@@ -129,7 +129,7 @@ robot.waitUntilDone();
 robot.move_cubic_sync(beaker_1_coord_up,beaker_1_coord_down,2*n_points,0);
 robot.waitUntilDone();
 
-pause(2)%Here so I can place 'beaker', not necessary in reality
+pause(0.5)%Here so I can place 'beaker', not necessary in reality
 
 %Grab it (wide bottle so slight here)
 robot.open_gripper_slightly();
@@ -206,7 +206,7 @@ robot.waitUntilDone();
 robot.close_gripper(); %Check the gripper closing here
 robot.waitUntilDone();
 
-robot.move_cubic_sync(stir_coord_down,stir_coord_up,2*n_points,0);
+robot.move_cubic_sync(stir_coord_down,stir_coord_up,3*n_points,0);
 robot.waitUntilDone();
 
 %% ---- Move and Stir ---- %%

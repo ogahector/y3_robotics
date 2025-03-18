@@ -27,7 +27,7 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180 - 1.5, 1);
+                        port_num, 180 -1.75, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
                         port_num, +270 - 12.4, -1);
@@ -98,7 +98,7 @@ coords = [
 robot.disableTorque();
 
 %% ---- Move ---- %%
-robot.setMaxSpeed(120);
+robot.setMaxSpeed(80);
 robot.enableTorque();
 
 %% ---- MOVE USING CUBIC ---- %%
@@ -147,7 +147,7 @@ for i = 0 : 2
 end
 
 robot.move_cubic_sync_time(POINT, n_points, 0);
-pause(10)
+pause(2)
 
 %% ---- End ---- %%
 robot.disableTorque();
