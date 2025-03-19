@@ -27,7 +27,7 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180 - 1.3, 1);
+                        port_num, 180 - 1.5, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
                         port_num, +270 - 12.4, -1);
@@ -80,7 +80,7 @@ z_lim_v = 2.35;
 z_lim_h = z_lim_v - 0.25;
 
 offset_h2v = 1.1; %Offset for vertical grabs
-rotate_offset_h2v = 0.4; %Offset for vertical grabs in rotation (different for some reason)
+rotate_offset_h2v = 0.6; %Offset for vertical grabs in rotation (different for some reason)
 
 
 

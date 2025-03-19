@@ -63,14 +63,14 @@ hammer_coord = [-2 , -8];
 
 coords = [%Adjust these to get desired results
     grid2cm([-2, -7]) , z_lim + gate_offset;%1 - Next to hammer
-    grid2cm([3.75, -6]) , z_lim + gate_offset;%2 - Before gate 1
-    grid2cm([3.75, -3]) , z_lim + gate_offset;%3 - After gate 1
-    grid2cm([8.6, -3]) , z_lim + gate_offset+2.5;%4 - Before gate 2
-    grid2cm([8.6, -1]) , z_lim + gate_offset+2.5;%5 - After gate 2
-    grid2cm([6.75, 1]) , z_lim + gate_offset+1;%6 - Before gate 3
-    grid2cm([6.75, 3]) , z_lim + gate_offset+2;%7 - After gate 3
-    grid2cm([5 , 4]) , z_lim + gate_offset - 1; %Before gate 4
-    grid2cm([3, 4]) , z_lim + gate_offset - 1%8 - After gate 4
+    grid2cm([3.8, -6]) , z_lim + gate_offset-1;%2 - Before gate 1
+    grid2cm([3.8, -3]) , z_lim + gate_offset-1;%3 - After gate 1
+    grid2cm([8.75, -3]) , z_lim + gate_offset+2;%4 - Before gate 2
+    grid2cm([8.75, -1]) , z_lim + gate_offset+2;%5 - After gate 2
+    grid2cm([6.75, 1]) , z_lim + gate_offset+0.5;%6 - Before gate 3
+    grid2cm([6.75, 3]) , z_lim + gate_offset+1.5;%7 - After gate 3
+    grid2cm([5 , 3.8]) , z_lim + gate_offset - 1; %Before gate 4
+    grid2cm([3, 3.8]) , z_lim + gate_offset - 1%8 - After gate 4
     ];
 
 %% --- CONFIGURE --- %%
@@ -83,7 +83,7 @@ robot.enableTorque();
 
 %% --- GRAB HAMMER --- %%
 hammer_grab_angle = 45; %Angle at which the robot will grab the hammer
-n_points = 50;
+n_points = 26;
 
 
 hammer_coord = [grid2cm(hammer_coord), z_lim + hammer_offset]';
@@ -103,7 +103,7 @@ robot.waitUntilDone();
 robot.open_gripper();
 robot.waitUntilDone();
 
-robot.move_sync((hammer_coord - [0 ; 0 ; 7.5]),hammer_grab_angle);
+robot.move_cubic_sync_time((hammer_coord - [0 ; 0 ; 7.5]), n_points, hammer_grab_angle);
 robot.waitUntilDone();
 
 robot.close_gripper();
@@ -111,14 +111,14 @@ robot.waitUntilDone();
 
 robot.setMaxSpeed(40);
 
-robot.move_cubic_sync((hammer_coord - [0 ; 0 ; 7.5]),hammer_coord,n_points*3,hammer_grab_angle);
+robot.move_cubic_sync(hammer_coord,n_points*3,hammer_grab_angle);
 robot.waitUntilDone();
 
 robot.setMaxSpeed(120)
 
 %% --- MOVE THROUGH GATES --- %%
 
-robot.move_sync(coords(1,:)',hammer_grab_angle);%Next to hammer
+robot.move_cubic_sync_time(coords(1,:)', n_points, hammer_grab_angle);%Next to hammer
 robot.waitUntilDone();
 % for i = 1:3:8
 %     robot.move_cubic(coords(i,:),coords(i+ 1,:),20,90);
