@@ -2,6 +2,7 @@ clc;
 clear;
 close all;
 
+% this is the version that was used during the demo
 
 %% ---- Initialise ---- %%
 % Protocol version
@@ -63,12 +64,12 @@ hammer_coord = [-2 , -8];
 
 coords = [%Adjust these to get desired results
     grid2cm([-2, -7]) , z_lim + gate_offset;%1 - Next to hammer
-    grid2cm([5, -7]) , z_lim + gate_offset + 1;%2 - Before gate 1
-    grid2cm([5, -5]) , z_lim + gate_offset + 1;%3 - After gate 1
+    grid2cm([4.9, -7]) , z_lim + gate_offset + 1;%2 - Before gate 1
+    grid2cm([4.9, -5]) , z_lim + gate_offset + 1;%3 - After gate 1
     grid2cm([6, -1]) , z_lim + gate_offset - 1;%4 - Before gate 2
     grid2cm([4, -1]) , z_lim + gate_offset - 1;%5 - After gate 2
-    grid2cm([5, 1]) , z_lim + gate_offset - 1;%6 - Before gate 3
-    grid2cm([5, 3]) , z_lim + gate_offset - 1;%7 - After gate 3
+    grid2cm([4.9, 1]) , z_lim + gate_offset - 1;%6 - Before gate 3
+    grid2cm([4.9, 3]) , z_lim + gate_offset - 1;%7 - After gate 3
     grid2cm([8 , 0]) , z_lim + gate_offset + 1; %Before gate 4
     grid2cm([10, 0]) , z_lim + gate_offset + 1%8 - After gate 4
     ];
@@ -155,7 +156,37 @@ robot.move_cubic_sync(intermediary34,coords(8,:)',n_points/2,hammer_grab_angle);
 robot.waitUntilDone();
 robot.move_cubic_sync(coords(8,:)',coords(9,:)',n_points,hammer_grab_angle);%Through gate 4
 robot.waitUntilDone();
-robot.move_cubic_sync(coords(9,:)',coords(9,:)' - grid2cm([2 ; 0 ; 0]),n_points,hammer_grab_angle);
+
+robot.move_cubic_sync(coords(9,:)',coords(8,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+robot.move_cubic_sync(coords(8,:)',intermediary34,n_points/2,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(intermediary34,coords(7,:)',n_points/2,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(7,:)',coords(6,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(6,:)',intermediary23,n_points/2,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(intermediary23,coords(5,:)',n_points/2,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(5,:)',coords(4,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(4,:)',coords(3,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(3,:)',coords(2,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(2,:)',coords(1,:)',n_points,hammer_grab_angle);
+robot.waitUntilDone();
+
+robot.move_cubic_sync(coords(1,:)',hammer_coord - grid2cm([0;0;2]),n_points,hammer_grab_angle);
 robot.waitUntilDone();
 
 robot.open_gripper();

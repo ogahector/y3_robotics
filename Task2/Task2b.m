@@ -2,6 +2,7 @@
 % clear;
 % close all;
 
+% This is the version that was used during the demo
 
 %% ---- Initialise ---- %%
 % Protocol version
@@ -27,7 +28,7 @@ safeOpenPort(port_num, lib_name);
 safeSetBaudrate(port_num, BAUDRATE, lib_name);
 
 base = ServoDynamixel("Base Rotator", DXL_ID1, PROTOCOL_VERSION, ...
-                        port_num, 180 - 1.5, 1);
+                        port_num, 180 - 1, 1);
 
 shoulder = ServoDynamixel("Shoulder Joint", DXL_ID2, PROTOCOL_VERSION, ...
                         port_num, +270 - 12.4, -1);
@@ -49,22 +50,24 @@ wrist.setMovingThreshold(mov_threshold);
 finger.setMovingThreshold(mov_threshold);
 
 Gripper_Open = 110;
-Gripper_Slight = 155;
+Gripper_Slight = 160;
 Gripper_Close = 195;
 
 robot = Robot_4DOF(base, shoulder, elbow, wrist, finger,Gripper_Open,Gripper_Slight,Gripper_Close);
 
 %% ---- USER INPUTS ---- %%
 
-stack_grid_coord = [0, 6];
-gate_cube_coord = [9, 0];
+stack_grid_coord = [0, -6];
+gate_cube_coord = [8, 3];
 
 coords = [
-    7, -7;
-    3, -8
+    5, 5;
+    0, 8
 ];
 
-rotation_coord = [5,5];
+rotation_coord = [5,-5];
+
+gate_angle = 0;
 
 
 %% ---- INIT ROUTINE ---- %%
@@ -76,7 +79,7 @@ robot.enableTorque();
 
 n_points = 60;
 
-z_lim_v = 2.35;
+z_lim_v = 2.25;
 z_lim_h = z_lim_v - 0.25;
 
 offset_h2v = 1.1; %Offset for vertical grabs
@@ -106,7 +109,7 @@ stack_coord_down = grid2cm([stack_grid_coord, z_lim_v])'; % will also have to ch
 
 
 %% ---- GRAB CUBE FROM GATES ---- %%
-intermediary_pointCM = grid2cm([5.5, 0, 3.5])';
+intermediary_pointCM = grid2cm([5.5, 3, 3.5])';
 
 
 robot.setMaxSpeed(80);
@@ -115,26 +118,26 @@ robot.open_gripper_slightly();
 robot.waitUntilDone();
 
 %Outside gate
-robot.move_cubic_sync([15 ; 0 ; 20], outside_gate_coord,n_points, 0);
+robot.move_cubic_sync([15 ; 0 ; 20], outside_gate_coord,n_points, gate_angle);
 robot.waitUntilDone();
 
 %Inside gate
-robot.move_cubic_sync(outside_gate_coord, gate_cube_coord - [0.5;0;0], n_points, 0);
+robot.move_cubic_sync(outside_gate_coord, gate_cube_coord - [0.5;0;0], n_points, gate_angle);
 robot.waitUntilDone();
 
 robot.close_gripper();
 robot.waitUntilDone();
 
 %Move up a bit
-robot.move_cubic_sync(gate_cube_coord - [0.5;0;0], gate_cube_coord + [0;0;0.5], n_points,0);
+robot.move_cubic_sync(gate_cube_coord - [0.5;0;0], gate_cube_coord + [0;0;0.5], n_points,gate_angle);
 robot.waitUntilDone();
 
 %Back outside gate
-robot.move_cubic_sync(gate_cube_coord + [0;0;0.3], outside_gate_coord, n_points, 0);
+robot.move_cubic_sync(gate_cube_coord + [0;0;0.3], outside_gate_coord, n_points, gate_angle);
 robot.waitUntilDone();
 
 %Midpoint
-robot.move_cubic_sync(outside_gate_coord, intermediary_pointCM, n_points/2, 0);
+robot.move_cubic_sync(outside_gate_coord, intermediary_pointCM, n_points/2, gate_angle);
 robot.waitUntilDone();
 
 %%
@@ -142,11 +145,11 @@ robot.waitUntilDone();
 % It will be the first cube placed on the stack
 
 %Move higher 
-robot.move_cubic_sync_time(intermediary_pointCM,intermediary_pointCM+grid2cm([0;0;4]),100,0);
+robot.move_cubic_sync_time(intermediary_pointCM,intermediary_pointCM+grid2cm([0;0;4]),100,gate_angle);
 robot.waitUntilDone();
 
 %Move above stack
-robot.move_cubic_sync_time(intermediary_pointCM, stack_coord_up,n_points*2, 90);
+robot.move_cubic_sync(intermediary_pointCM, stack_coord_up,n_points*2, gate_angle);
 robot.waitUntilDone();
 
 %Drop onto stack (with vertical offset, since cube was picked up
@@ -204,7 +207,7 @@ robot.waitUntilDone();
 % robot.move_cubic_sync_time(rotation_coord_down, n_points, 90);
 % robot.waitUntilDone();
 
-robot.rotateCubeNTimes(3, rotate_v,rotate_h);
+robot.rotateCubeNTimes(1, rotate_v,rotate_h);
 robot.waitUntilDone();
 
 robot.open_gripper();
